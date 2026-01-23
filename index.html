@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Financeiro">
+    
+    <title>Financeiro Casa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #F4F4F4;
+            overscroll-behavior-y: contain;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes in { 
+            from { opacity: 0; transform: translateY(20px) scale(0.9); } 
+            to { opacity: 1; transform: translateY(0) scale(1); } 
+        }
+        .animate-in { animation: in 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+
+        .card-shadow { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        #root { min-height: 100vh; width: 100vw; }
+        
+        .input-light {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            color: #374151;
+            font-size: 12px;
+            padding: 8px 12px;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body class="pb-44">
+
+    <div id="root">
+        <div class="h-screen bg-black flex items-center justify-center text-[#CCFF00]">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl"></i>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVTxDg9He6DQI6SFp6Zgyidp83H6dduho",
+            authDomain: "financeiro-casa-66baa.firebaseapp.com",
+            projectId: "financeiro-casa-66baa",
+            storageBucket: "financeiro-casa-66baa.firebasestorage.app",
+            messagingSenderId: "997176892152",
+            appId: "1:997176892152:web:5dcc06d2a94900f5b7390d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const APP_ID = "financeiro-casa-66baa";
+
+        const CATEGORIAS = [
+            { id: 'salao', nome: 'Salão Mari', icone: 'fa-scissors' },
+            { id: 'carro', nome: 'Carro', icone: 'fa-car' },
+            { id: 'estudo', nome: 'Estudo', icone: 'fa-graduation-cap' },
+            { id: 'compras', nome: 'Compras', icone: 'fa-cart-shopping' },
+            { id: 'casa', nome: 'Casa', icone: 'fa-house-chimney' },
+            { id: 'lazer', nome: 'Lazer', icone: 'fa-gamepad' },
+            { id: 'saude', nome: 'Saúde', icone: 'fa-heart-pulse' },
+            { id: 'outros', nome: 'Outros', icone: 'fa-ellipsis' },
+        ];
+
+        const CORES_ESTILO = [
+            { id: 'roxo', hex: '#8A05BE', nome: 'Nubank' },
+            { id: 'vermelho', hex: '#EC0000', nome: 'Santander' },
+            { id: 'verde_sicoob', hex: '#003641', nome: 'Sicoob' },
+            { id: 'verde_picpay', hex: '#11C76F', nome: 'PicPay' },
+            { id: 'azul', hex: '#0047BB', nome: 'Caixa' },
+            { id: 'prata', hex: '#A6A6A6', nome: 'C6 Bank' },
+            { id: 'preto', hex: '#1A1A1A', nome: 'Black/Gold' },
+            { id: 'laranja', hex: '#FF7A00', nome: 'Inter' },
+        ];
+
+        const FRASES_ALIVIO = ["Ufa, menos uma conta!", "Missão cumprida.", "O bolso agradece!", "Paz de espírito!"];
+
+        let state = {
+            user: null,
+            dados: { contas: [], cartoes: [], fixas: [] },
+            abaAtiva: 'home',
+            filtroStatus: 'todos',
+            verSaldo: true,
+            semanasAtivas: [],
+            dataNavegacao: new Date(),
+            modal: null,
+            tipoLancamento: 'conta',
+            passoLancamento: 'selecao',
+            itemSelecionadoId: '',
+            editando: null,
+            tempImagem: null,
+            catSelecionada: 'outros',
+            corSelecionada: CORES_ESTILO[0],
+            feedback: { ativo: false, status: 'sucesso', frase: '' },
+            filtroMesInicio: "",
+            filtroMesFim: ""
+        };
+
+        function render() {
+            const root = document.getElementById('root');
+            if (!state.user) return;
+            root.innerHTML = `
+                <div class="min-h-screen">
+                    ${renderHeader()}
+                    ${renderAbaConteudo()}
+                    ${renderModais()}
+                    ${renderFeedback()}
+                    ${renderFooter()}
+                </div>
+            `;
+        }
+
+        function renderHeader() {
+            if (state.abaAtiva !== 'home') return '';
+            return `
+                <div class="pb-24 pt-12 px-6 bg-[#121212]">
+                    <div class="max-w-md mx-auto flex justify-between items-center text-white">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center border border-white/10 bg-[#2A2A2A]">
+                                <i class="fa-solid fa-bolt-lightning text-[#CCFF00]"></i>
+                            </div>
+                            <span class="font-bold text-xs tracking-[0.2em] uppercase italic">Financeiro Casa</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAbaConteudo() {
+            const stats = calculateStats();
+            if (state.abaAtiva === 'home') {
+                return `
+                    <div class="max-w-md mx-auto px-4 -mt-16 relative">
+                        <div class="absolute right-0 top-8 z-30 shadow-2xl flex items-center bg-black rounded-l-2xl py-2 pl-4 pr-6 border-l border-t border-b border-white/10">
+                            <button onclick="changeMonth(-1)" class="text-[#CCFF00] p-1"><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
+                            <span class="mx-3 text-[10px] font-black text-white uppercase tracking-widest min-w-[40px] text-center">
+                                ${state.dataNavegacao.toLocaleString('pt-br', { month: 'short' }).replace('.', '')}
+                            </span>
+                            <button onclick="changeMonth(1)" class="text-[#CCFF00] p-1"><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+                        </div>
+                        <div class="rounded-[40px] p-6 pb-16 shadow-2xl relative overflow-hidden bg-[#CCFF00]">
+                            <div class="flex justify-between items-start mb-2 text-black/60 text-[10px] font-black uppercase tracking-widest">
+                                <span>${state.semanasAtivas.length > 0 ? `Sem: ${state.semanasAtivas.join(',')}` : "A PAGAR"}</span>
+                                <button onclick="toggleSaldo()" class="text-black/40"><i class="fa-solid ${state.verSaldo ? 'fa-eye' : 'fa-eye-slash'}"></i></button>
+                            </div>
+                            <div class="h-12 flex items-center">
+                                ${state.verSaldo ? `<h1 class="text-4xl font-black text-black tracking-tighter">R$ ${stats.pendente.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</h1>` : `<div class="w-40 h-8 bg-black/10 rounded-full animate-pulse"></div>`}
+                            </div>
+                            <div class="mt-8 grid grid-cols-2 gap-6 border-t border-black/15 pt-6">
+                                <div class="flex flex-col"><span class="text-[10px] font-black text-black uppercase mb-1">Contas</span><span class="text-sm font-black text-black">${stats.qtd} itens</span></div>
+                                <div class="flex flex-col border-l border-black/15 pl-6"><span class="text-[10px] font-black text-black uppercase mb-1">Pago</span><span class="text-sm font-black text-black">R$ ${stats.pago.toLocaleString('pt-br', { minimumFractionDigits: 0 })}</span></div>
+                            </div>
+                        </div>
+                        <div class="absolute -bottom-6 left-0 w-full px-6 flex justify-between gap-2 z-20 overflow-x-auto no-scrollbar pb-2">
+                            <button onclick="setSemana('all')" class="w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center text-[10px] font-black border-4 shadow-xl transition-all ${state.semanasAtivas.length === 0 ? 'bg-black text-[#CCFF00]' : 'bg-white text-black'}" style="border-color: #F4F4F4">ALL</button>
+                            ${[1, 2, 3, 4, 5, 6].map(n => `
+                                <button onclick="setSemana(${n})" class="w-12 h-12 flex-shrink-0 rounded-full flex flex-col items-center justify-center border-4 shadow-xl transition-all ${state.semanasAtivas.includes(n) ? 'bg-black text-[#CCFF00] scale-110' : 'bg-white text-black'}" style="border-color: #F4F4F4">
+                                    <span class="text-[7px] font-bold uppercase">S</span>
+                                    <span class="text-sm font-black">${n}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="max-w-md mx-auto px-4 mt-10">
+                        <div class="flex bg-white/50 backdrop-blur-md border border-gray-200 p-1 rounded-2xl gap-1 w-fit mb-4">
+                            ${['todos', 'pendentes', 'pagos'].map(f => `
+                                <button onclick="setFiltroStatus('${f}')" class="w-9 h-9 rounded-xl flex items-center justify-center transition-all ${state.filtroStatus === f ? 'bg-black text-[#CCFF00] shadow-lg scale-105' : 'text-gray-400'}">
+                                    <i class="fa-solid ${f==='todos'?'fa-list-ul':f==='pendentes'?'fa-clock':'fa-check-double'} text-[11px]"></i>
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="rounded-[32px] shadow-sm overflow-hidden border border-gray-200 bg-white divide-y divide-gray-50">
+                            ${stats.lista.length > 0 ? stats.lista.map((c, idx) => renderItemConta(c, idx)).join('') : `
+                                <div class="p-12 text-center opacity-20"><i class="fa-solid fa-ghost text-4xl mb-2"></i><p class="text-[10px] font-black uppercase">Vazio</p></div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.abaAtiva === 'cartoes') {
+                return `
+                    <div class="p-6 max-w-md mx-auto pt-16">
+                        <h2 class="text-4xl font-black text-black uppercase mb-10">Meus Cartões</h2>
+                        <div class="grid gap-6">
+                            ${state.dados.cartoes.map(c => `
+                                <div onclick="openFaturas('${c.id}')" class="rounded-[32px] p-7 shadow-2xl relative overflow-hidden cursor-pointer active:scale-95 transition-all" style="background: ${c.cor?.hex || '#111'}; color: #fff">
+                                    <div class="flex justify-between items-start mb-8">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center overflow-hidden">
+                                                ${c.imagem ? `<img src="${c.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid fa-credit-card"></i>`}
+                                            </div>
+                                            <div>
+                                                <h3 class="text-base font-black uppercase tracking-tighter text-white">${c.banco}</h3>
+                                                <p class="text-[8px] font-black opacity-60 tracking-[0.2em]">CLIQUE PARA VER FATURAS</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <button onclick="event.stopPropagation(); editCartao('${c.id}')" class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid fa-pen text-[9px]"></i></button>
+                                            <button onclick="event.stopPropagation(); confirmDelete('${c.id}', 'cartao_db')" class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid fa-trash text-[9px]"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-end">
+                                        <span class="text-xs font-black uppercase tracking-widest text-white/90">${c.titular || 'TITULAR'}</span>
+                                        <div class="text-right">
+                                            <span class="text-[9px] uppercase font-black opacity-50 block">FECHAMENTO</span>
+                                            <span class="text-sm font-black">DIA ${c.diaFatura}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            <button onclick="openModalCartao()" class="w-full h-24 rounded-[32px] border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 gap-3 uppercase font-black text-xs hover:border-[#CCFF00] hover:text-[#CCFF00] transition-all">
+                                <i class="fa-solid fa-plus"></i> Novo Cartão
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.abaAtiva === 'fixas') {
+                return `
+                    <div class="min-h-screen pt-16">
+                        <div class="px-6 mb-8 max-w-md mx-auto">
+                            <h2 class="text-4xl font-black text-black uppercase mb-8">Contas Fixas</h2>
+                            <button onclick="openModalFixa()" class="flex items-center gap-3 bg-white p-3 pr-6 rounded-full shadow-sm">
+                                <div class="w-10 h-10 rounded-full bg-[#11C76F] flex items-center justify-center text-white"><i class="fa-solid fa-plus"></i></div>
+                                <span class="text-[10px] font-black uppercase text-black tracking-widest">Nova conta fixa</span>
+                            </button>
+                        </div>
+                        <div class="divide-y divide-gray-100 bg-white">
+                            ${state.dados.fixas.map(f => `
+                                <div onclick="openHistoricoFixa('${f.id}')" class="px-6 py-5 flex items-center justify-between cursor-pointer hover:bg-gray-50">
+                                    <div class="max-w-md mx-auto w-full flex items-center justify-between">
+                                        <div class="flex items-center gap-4 flex-1">
+                                            <div class="w-12 h-12 rounded-xl border border-gray-100 flex items-center justify-center bg-gray-50 overflow-hidden">
+                                                ${f.imagem ? `<img src="${f.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${CATEGORIAS.find(cat => cat.id === f.categoria)?.icone || 'fa-receipt'} text-black/10"></i>`}
+                                            </div>
+                                            <div>
+                                                <h4 class="text-sm font-black text-black">${f.nome}</h4>
+                                                <span class="text-[9px] font-black uppercase text-black/40 tracking-widest">Venc. Dia ${f.diaVencimento}</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <button onclick="event.stopPropagation(); editFixa('${f.id}')" class="w-9 h-9 rounded-xl bg-black flex items-center justify-center"><i class="fa-solid fa-pen text-[9px] text-[#CCFF00]"></i></button>
+                                            <button onclick="event.stopPropagation(); confirmDelete('${f.id}', 'fixa')" class="w-9 h-9 rounded-xl bg-black flex items-center justify-center"><i class="fa-solid fa-trash text-[9px] text-[#CCFF00]"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderItemConta(c, idx) {
+            const categoria = CATEGORIAS.find(cat => cat.id === c.categoria) || CATEGORIAS[7];
+            return `
+                <div class="relative p-5 flex items-center justify-between hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? 'bg-[#CCFF00]/5' : 'bg-white'}">
+                    <div class="flex items-center gap-3 flex-1 ${c.pago ? 'opacity-30' : 'opacity-100'}">
+                        <div class="w-10 h-10 rounded-2xl flex-shrink-0 border border-gray-100 flex items-center justify-center bg-gray-50 overflow-hidden">
+                            ${c.imagem ? `<img src="${c.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${categoria.icone} text-black/20 text-xs"></i>`}
+                        </div>
+                        <div class="truncate">
+                            <h4 class="text-xs font-bold truncate text-gray-800">${c.nome}</h4>
+                            <div class="flex items-center gap-2">
+                                <p class="text-[11px] font-black">R$ ${(c.pago ? (c.historicoPagamentos || []).reduce((a,b)=>a+b.valor,0) : (c.valor - (c.historicoPagamentos || []).reduce((a,b)=>a+b.valor,0))).toLocaleString('pt-br', { minimumFractionDigits: 2 })}</p>
+                                <span class="text-[8px] font-black text-black/20 uppercase">${new Date(c.data + 'T12:00:00').toLocaleDateString('pt-br', { day: '2-digit', month: '2-digit' })}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-1.5 ml-2">
+                        <button onclick="openModalPagar('${c.id}')" class="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm ${c.pago ? 'bg-[#11C76F] text-white' : 'bg-[#CCFF00] text-black'} active:scale-90 transition-all"><i class="fa-solid ${c.pago ? 'fa-check-double' : 'fa-hand-holding-dollar'} text-[12px]"></i></button>
+                        <button onclick="editConta('${c.id}')" class="w-9 h-9 rounded-xl bg-black flex items-center justify-center shadow-sm active:scale-90 transition-all"><i class="fa-solid fa-pen text-[10px] text-[#CCFF00]"></i></button>
+                        <button onclick="confirmDelete('${c.id}', 'conta')" class="w-9 h-9 rounded-xl bg-black flex items-center justify-center shadow-sm active:scale-90 transition-all"><i class="fa-solid fa-trash text-[10px] text-[#CCFF00]"></i></button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFooter() {
+            return `
+                <div class="fixed bottom-8 left-6 right-6 z-[100]">
+                    <div class="bg-black/95 backdrop-blur-2xl rounded-[35px] py-4 px-8 flex justify-between items-center shadow-2xl border border-white/10">
+                        ${[
+                            { id: 'home', ic: 'house-chimney', label: 'Home' }, 
+                            { id: 'cartoes', ic: 'credit-card', label: 'Cartões' }, 
+                            { id: 'fixas', ic: 'house-lock', label: 'Fixas' }
+                        ].map(b => `
+                            <button onclick="setAba('${b.id}')" class="flex flex-col items-center gap-1 transition-all ${state.abaAtiva === b.id ? 'opacity-100 scale-110' : 'opacity-25'}">
+                                <i class="fa-solid fa-${b.ic} text-xl text-white ${state.abaAtiva === b.id ? 'text-[#CCFF00]' : ''}"></i>
+                                <span class="text-[8px] font-black uppercase tracking-widest text-white">${b.label}</span>
+                            </button>
+                        `).join('')}
+                        <button onclick="openModalLancamento()" class="w-12 h-12 rounded-2xl bg-[#CCFF00] flex items-center justify-center text-black shadow-lg shadow-[#CCFF00]/20 active:scale-90 transition-all">
+                            <i class="fa-solid fa-plus text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderModais() {
+            if (!state.modal) return '';
+
+            if (state.modal === 'faturas') {
+                const cartao = state.editando;
+                const info = calculateFaturasInfo();
+                const totalGeral = info.agrupado.reduce((acc, g) => acc + g.total, 0);
+
+                return `
+                    <div class="fixed inset-0 bg-white z-[600] overflow-y-auto no-scrollbar animate-in">
+                        <div class="w-full py-8 px-6 mb-6 flex items-center gap-6" style="background-color: ${cartao.cor?.hex || '#111'}">
+                            <button onclick="closeModal()" class="text-white active:scale-90"><i class="fa-solid fa-arrow-left text-xl"></i></button>
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center overflow-hidden">
+                                     ${cartao.imagem ? `<img src="${cartao.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid fa-credit-card text-white"></i>`}
+                                </div>
+                                <h3 class="text-white font-black uppercase text-xl tracking-tighter">${cartao.banco}</h3>
+                            </div>
+                        </div>
+
+                        <div class="px-6 max-w-2xl mx-auto">
+                            <div class="flex gap-4 mb-4">
+                                <div class="flex-1">
+                                    <span class="text-[9px] font-bold text-gray-400 uppercase block mb-1">Início</span>
+                                    <input type="month" value="${state.filtroMesInicio}" onchange="setFiltroMes('inicio', this.value)" class="input-light w-full" />
+                                </div>
+                                <div class="flex-1">
+                                    <span class="text-[9px] font-bold text-gray-400 uppercase block mb-1">Fim</span>
+                                    <input type="month" value="${state.filtroMesFim}" onchange="setFiltroMes('fim', this.value)" class="input-light w-full" />
+                                </div>
+                            </div>
+
+                            <div class="mb-8">
+                                ${(!state.filtroMesInicio && !state.filtroMesFim) 
+                                    ? `<p class="text-xs text-gray-500 font-medium">Confira suas faturas</p>` 
+                                    : `<p class="text-xs text-gray-500 font-medium">Filtro de ${state.filtroMesInicio || '...'} até ${state.filtroMesFim || '...'}</p>`
+                                }
+                            </div>
+
+                            <div class="w-full mb-12">
+                                ${info.agrupado.map((grupo, gIdx) => `
+                                    <div class="flex items-center justify-between py-4 px-2 border-b border-gray-100 ${gIdx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">
+                                        <div class="flex items-center gap-4">
+                                            <span class="text-xs font-semibold text-gray-700 capitalize">${new Date(grupo.mes + '-01T12:00:00').toLocaleDateString('pt-br', { month: 'long' })}</span>
+                                        </div>
+                                        <div class="flex items-center gap-6">
+                                            <span class="text-sm font-bold text-gray-900">R$ ${grupo.total.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                            <button onclick="toggleExpandFatura('${grupo.mes}')" class="text-gray-300"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
+                                        </div>
+                                    </div>
+                                    <div id="fatura-detalhe-${grupo.mes}" class="hidden bg-gray-50/50 px-4 py-2 border-b border-gray-100">
+                                        ${grupo.itens.map(item => `
+                                            <div class="flex justify-between items-center py-2">
+                                                <span class="text-[10px] text-gray-500">${item.nome} (${new Date(item.data + 'T12:00:00').getDate()})</span>
+                                                <div class="flex items-center gap-3">
+                                                    <span class="text-[10px] font-bold text-gray-700">R$ ${item.valor.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                                    <button onclick="editContaFromModal('${item.id}')" class="text-gray-400"><i class="fa-solid fa-pen text-[8px]"></i></button>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                `).join('')}
+
+                                <div class="mt-10 pt-6 border-t-2 border-gray-900 flex justify-between items-center">
+                                    <span class="text-xs font-black uppercase tracking-widest text-gray-400">Total Período</span>
+                                    <span class="text-2xl font-black text-gray-900">R$ ${totalGeral.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="h-24"></div>
+                    </div>
+                `;
+            }
+
+            if (state.modal === 'historico') {
+                const fixa = state.editando;
+                const info = calculateHistoricoFixaInfo();
+                const totalGeral = info.lista.reduce((acc, i) => acc + i.valor, 0);
+
+                return `
+                    <div class="fixed inset-0 bg-white z-[600] overflow-y-auto no-scrollbar animate-in">
+                        <div class="w-full py-8 px-6 mb-6 flex items-center gap-6 bg-gray-100">
+                            <button onclick="closeModal()" class="text-black active:scale-90"><i class="fa-solid fa-arrow-left text-xl"></i></button>
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center overflow-hidden border border-gray-200">
+                                     ${fixa.imagem ? `<img src="${fixa.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${CATEGORIAS.find(c=>c.id===fixa.categoria)?.icone || 'fa-receipt'} text-black/20"></i>`}
+                                </div>
+                                <h3 class="text-black font-black uppercase text-xl tracking-tighter">${fixa.nome}</h3>
+                            </div>
+                        </div>
+
+                        <div class="px-6 max-w-2xl mx-auto">
+                            <!-- Filtros Data Histórico Fixa -->
+                            <div class="flex gap-4 mb-4">
+                                <div class="flex-1">
+                                    <span class="text-[9px] font-bold text-gray-400 uppercase block mb-1">Início</span>
+                                    <input type="month" value="${state.filtroMesInicio}" onchange="setFiltroMes('inicio', this.value)" class="input-light w-full" />
+                                </div>
+                                <div class="flex-1">
+                                    <span class="text-[9px] font-bold text-gray-400 uppercase block mb-1">Fim</span>
+                                    <input type="month" value="${state.filtroMesFim}" onchange="setFiltroMes('fim', this.value)" class="input-light w-full" />
+                                </div>
+                            </div>
+
+                            <div class="mb-8">
+                                ${(!state.filtroMesInicio && !state.filtroMesFim) 
+                                    ? `<p class="text-xs text-gray-500 font-medium">Histórico de pagamentos desta conta</p>` 
+                                    : `<p class="text-xs text-gray-500 font-medium">Filtrado: ${state.filtroMesInicio || '...'} até ${state.filtroMesFim || '...'}</p>`
+                                }
+                            </div>
+
+                            <div class="w-full mb-12">
+                                ${info.lista.map((item, idx) => `
+                                    <div class="flex items-center justify-between py-5 px-2 border-b border-gray-100 ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">
+                                        <div class="flex flex-col">
+                                            <span class="text-xs font-semibold text-gray-700 capitalize">${new Date(item.data + 'T12:00:00').toLocaleDateString('pt-br', { month: 'long', year: 'numeric' })}</span>
+                                            <span class="text-[9px] font-bold text-gray-400 uppercase">Vencimento: ${new Date(item.data + 'T12:00:00').toLocaleDateString('pt-br')}</span>
+                                        </div>
+                                        <div class="flex items-center gap-6">
+                                            <div class="text-right">
+                                                <span class="text-sm font-bold text-gray-900 block">R$ ${item.valor.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                                <span class="text-[8px] font-black uppercase ${item.pago ? 'text-green-500' : 'text-red-500'}">${item.pago ? 'Pago' : 'Pendente'}</span>
+                                            </div>
+                                            <button onclick="editContaFromModal('${item.id}')" class="text-gray-300 active:scale-90"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+
+                                <div class="mt-10 pt-6 border-t-2 border-gray-900 flex justify-between items-center">
+                                    <span class="text-xs font-black uppercase tracking-widest text-gray-400">Total Histórico</span>
+                                    <span class="text-2xl font-black text-gray-900">R$ ${totalGeral.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="h-24"></div>
+                    </div>
+                `;
+            }
+
+            if (state.modal === 'pagar') {
+                const item = state.editando;
+                const totalPago = (item.historicoPagamentos || []).reduce((a,b)=>a+b.valor,0);
+                const falta = Math.max(0, item.valor - totalPago);
+                
+                return `
+                    <div class="fixed inset-0 bg-black/60 backdrop-blur-xl z-[800] flex items-end justify-center" onclick="if(event.target === this) closeModal()">
+                        <div class="w-full max-w-md p-6 pb-12 bg-[#121212] rounded-t-[40px] border-t border-[#CCFF00]/40 animate-in overflow-y-auto max-h-[95vh] no-scrollbar">
+                            <div class="w-12 h-1 bg-white/10 rounded-full mx-auto mb-6"></div>
+                            
+                            <div class="flex items-center gap-4 mb-8">
+                                <div class="w-14 h-14 rounded-2xl border border-white/5 bg-black overflow-hidden flex items-center justify-center">
+                                    ${item.imagem ? `<img src="${item.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${CATEGORIAS.find(cat => cat.id === item.categoria)?.icone || 'fa-receipt'} text-[#CCFF00]"></i>`}
+                                </div>
+                                <div>
+                                    <span class="text-[#CCFF00] font-black uppercase text-[10px] tracking-widest italic">${item.pago ? 'Conta Liquidada' : 'Lançar Pagamento'}</span>
+                                    <h3 class="text-white font-black text-base truncate">${item.nome}</h3>
+                                </div>
+                            </div>
+
+                            ${item.historicoPagamentos?.length > 0 ? `
+                                <div class="mb-6 space-y-2">
+                                    <span class="text-white/40 text-[8px] font-black uppercase block mb-2 tracking-widest">Pagamentos Registrados</span>
+                                    ${item.historicoPagamentos.map(p => `
+                                        <div class="bg-white/5 rounded-2xl p-4 flex justify-between items-center border border-white/5">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-8 rounded-full bg-[#11C76F]/20 flex items-center justify-center"><i class="fa-solid fa-check text-[#11C76F] text-[10px]"></i></div>
+                                                <div>
+                                                    <p class="text-white font-black text-[11px]">R$ ${p.valor.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</p>
+                                                    <p class="text-white/30 text-[8px] font-bold uppercase">${new Date(p.data).toLocaleDateString('pt-br')} às ${new Date(p.data).toLocaleTimeString('pt-br', { hour: '2-digit', minute: '2-digit' })}</p>
+                                                </div>
+                                            </div>
+                                            <button onclick="handleDeletePagamento('${p.id}')" class="w-8 h-8 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 active:scale-90 transition-all"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+
+                            ${!item.pago ? `
+                                <div class="grid grid-cols-5 gap-3 mb-8">
+                                    <div class="col-span-2 bg-white/5 p-4 rounded-2xl flex flex-col justify-center border border-white/5">
+                                        <span class="text-white/40 text-[8px] font-black uppercase block">Saldo Falta</span>
+                                        <span class="text-white font-black text-lg">R$ ${falta.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div class="col-span-3 bg-black rounded-2xl border-2 border-[#CCFF00] p-4 flex flex-col">
+                                        <span class="text-[#CCFF00] text-[8px] font-black uppercase block">Valor Pago Agora</span>
+                                        <input id="pagamento-input" type="number" step="0.01" placeholder="${falta.toFixed(2)}" class="bg-transparent text-white w-full font-black text-2xl outline-none" oninput="togglePagarBtn(this.value)" />
+                                    </div>
+                                </div>
+                                <button id="btn-confirmar-pagamento" onclick="handleConfirmarPagamento()" disabled class="w-full py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] bg-white/5 text-white/10 transition-all">Confirmar Pagamento</button>
+                            ` : `
+                                <div class="bg-[#11C76F]/10 border border-[#11C76F]/30 p-6 rounded-[30px] text-center mb-6">
+                                    <i class="fa-solid fa-circle-check text-[#11C76F] text-3xl mb-3"></i>
+                                    <h4 class="text-[#11C76F] font-black uppercase text-xs tracking-widest">Pagamento 100%</h4>
+                                    <p class="text-white/40 text-[9px] mt-2 font-bold uppercase">Total quitado de R$ ${item.valor.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</p>
+                                </div>
+                            `}
+                            <button onclick="closeModal()" class="w-full mt-4 py-3 text-white/20 font-black uppercase text-[9px] tracking-[0.3em]">Fechar</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.modal === 'lancamento') {
+                return `
+                    <div class="fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
+                        <div class="w-full max-w-sm bg-[#1A1A1A] rounded-[32px] border border-[#CCFF00]/30 p-6 animate-in">
+                            ${state.passoLancamento === 'selecao' ? `
+                                <div class="text-center py-4">
+                                    <div class="w-14 h-14 bg-[#CCFF00] rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(204,255,0,0.3)]"><i class="fa-solid fa-plus text-black text-xl"></i></div>
+                                    <h2 class="text-[#CCFF00] font-black uppercase text-xs tracking-widest mb-8 italic">Novo Lançamento</h2>
+                                    <div class="space-y-3">
+                                        <button onclick="setLancamentoTipo('conta')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Variável / Eventual</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
+                                        <button onclick="setLancamentoTipo('fixa')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Conta Fixa Salva</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
+                                        <button onclick="setLancamentoTipo('cartao')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Cartão de Crédito</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
+                                    </div>
+                                    <button onclick="closeModal()" class="mt-8 text-white/40 font-black uppercase text-[8px] tracking-[0.3em]">Cancelar</button>
+                                </div>
+                            ` : `
+                                <form onsubmit="handleSalvarConta(event)" class="space-y-6">
+                                    <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                                        <button type="button" onclick="backLancamento()" class="text-[#CCFF00]"><i class="fa-solid fa-arrow-left"></i></button>
+                                        <span class="text-white font-black uppercase text-[10px] tracking-widest">
+                                            ${state.tipoLancamento === 'conta' ? 'Variável' : state.tipoLancamento === 'cartao' ? 'Cartão' : 'Fixa'}
+                                        </span>
+                                        <div class="w-4"></div>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <div class="flex items-center gap-3">
+                                            <button type="button" onclick="triggerFile('main')" class="w-16 h-16 rounded-2xl bg-black border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                ${(state.tempImagem || state.editando?.imagem) ? `<img src="${state.tempImagem || state.editando?.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid fa-camera text-white/10"></i>`}
+                                            </button>
+                                            <input id="file-main" type="file" accept="image/*" class="hidden" onchange="processFile(event, 'tempImagem')">
+                                            <div class="flex-1">
+                                                ${state.tipoLancamento === 'conta' ? `
+                                                    <input name="nome" type="text" placeholder="Nome do lançamento" value="${state.editando?.nome || ''}" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required />
+                                                ` : `
+                                                    <select name="itemId" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required onchange="updateItemSelection(this.value)">
+                                                        <option value="">Selecione...</option>
+                                                        ${(state.tipoLancamento === 'cartao' ? state.dados.cartoes : state.dados.fixas).map(item => `<option value="${item.id}" ${state.itemSelecionadoId === item.id ? 'selected' : ''}>${state.tipoLancamento === 'cartao' ? item.banco : item.nome}</option>`).join('')}
+                                                    </select>
+                                                `}
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-12 gap-2">
+                                            <div class="col-span-5 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Valor</span>
+                                                <div class="flex items-center gap-1">
+                                                    <span class="text-[10px] text-[#CCFF00] font-bold">R$</span>
+                                                    <input name="valor" type="number" step="0.01" placeholder="0,00" value="${state.editando?.valor || ''}" class="bg-transparent text-[#CCFF00] w-full font-black text-lg outline-none" required />
+                                                </div>
+                                            </div>
+                                            <div class="col-span-4 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Dia</span>
+                                                <input name="dia" type="number" min="1" max="31" value="${getDiaSugerido()}" class="bg-transparent text-white w-full font-black text-lg outline-none" required />
+                                            </div>
+                                            <div class="col-span-3 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Parcelas</span>
+                                                <input name="repetir" type="number" min="1" max="24" value="1" class="bg-transparent text-white font-black text-lg outline-none w-full" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="w-full py-4 rounded-2xl bg-[#CCFF00] text-black font-black uppercase tracking-[0.2em] text-[11px] shadow-lg active:scale-95 transition-all">Salvar Registro</button>
+                                </form>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.modal === 'cartao') {
+                 return `
+                    <div class="fixed inset-0 bg-black/60 backdrop-blur-xl z-[700] flex items-end justify-center" onclick="if(event.target === this) closeModal()">
+                        <div class="w-full max-w-md p-8 bg-[#121212] rounded-t-[40px] border-t border-[#CCFF00]/40 animate-in max-h-[90vh] overflow-y-auto no-scrollbar">
+                            <div class="w-12 h-1 bg-white/10 rounded-full mx-auto mb-8"></div>
+                            <h3 class="text-white font-black uppercase text-center mb-10 text-xl tracking-widest italic">${state.editando ? 'Editar Cartão' : 'Novo Cartão'}</h3>
+                            <form onsubmit="handleSalvarCartao(event)">
+                                <div class="flex gap-4 mb-8">
+                                    <button type="button" onclick="triggerFile('cartao')" class="w-20 h-20 rounded-2xl border border-white/10 flex items-center justify-center bg-black overflow-hidden flex-shrink-0">
+                                        ${(state.tempImagem || state.editando?.imagem) ? `<img src="${state.tempImagem || state.editando?.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid fa-camera text-white/10 text-xl"></i>`}
+                                    </button>
+                                    <input id="file-cartao" type="file" accept="image/*" class="hidden" onchange="processFile(event, 'tempImagem')">
+                                    <div class="flex-1 space-y-3">
+                                        <input name="banco" placeholder="Banco?" value="${state.editando?.banco || ''}" class="w-full bg-black text-white p-4 rounded-2xl border border-white/10 outline-none text-sm font-bold focus:border-[#CCFF00]" required />
+                                        <input name="titular" placeholder="Titular" value="${state.editando?.titular || ''}" class="w-full bg-black text-white p-4 rounded-2xl border border-white/10 outline-none text-sm font-bold focus:border-[#CCFF00]" required />
+                                    </div>
+                                </div>
+                                <div class="mb-8">
+                                    <div class="grid grid-cols-4 gap-3">
+                                        ${CORES_ESTILO.map(cor => `
+                                            <button type="button" onclick="setCorCartao('${cor.id}')" class="h-11 rounded-xl transition-all border-2 ${state.corSelecionada.id === cor.id ? 'border-[#CCFF00] scale-110' : 'border-transparent opacity-30'}" style="background-color: ${cor.hex}">
+                                                ${state.corSelecionada.id === cor.id ? '<i class="fa-solid fa-check text-white text-[10px]"></i>' : ''}
+                                            </button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div class="bg-black p-4 rounded-2xl border border-white/5 mb-8">
+                                    <span class="text-[8px] text-white/40 font-black uppercase block mb-2">Dia Vencimento</span>
+                                    <input name="diaFatura" type="number" min="1" max="31" value="${state.editando?.diaFatura || 5}" class="bg-transparent text-white font-black text-2xl outline-none w-full" required />
+                                </div>
+                                <button type="submit" class="w-full py-5 rounded-3xl bg-[#CCFF00] text-black font-black uppercase tracking-[0.2em] text-[11px]">Salvar Cartão</button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.modal === 'fixa') {
+                return `
+                    <div class="fixed inset-0 bg-black/60 backdrop-blur-xl z-[700] flex items-end justify-center" onclick="if(event.target === this) closeModal()">
+                        <div class="w-full max-w-md p-8 bg-[#121212] rounded-t-[40px] border-t border-[#CCFF00]/40 animate-in max-h-[90vh] overflow-y-auto no-scrollbar">
+                            <div class="w-12 h-1 bg-white/10 rounded-full mx-auto mb-8"></div>
+                            <h3 class="text-white font-black uppercase text-center mb-10 text-xl tracking-widest italic">${state.editando ? 'Editar Fixa' : 'Nova Fixa'}</h3>
+                            <form onsubmit="handleSalvarFixa(event)">
+                                <div class="flex gap-4 mb-8">
+                                    <button type="button" onclick="triggerFile('fixa')" class="w-20 h-20 rounded-2xl border border-white/10 flex items-center justify-center bg-black overflow-hidden flex-shrink-0">
+                                        ${(state.tempImagem || state.editando?.imagem) ? `<img src="${state.tempImagem || state.editando?.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid fa-camera text-white/10 text-xl"></i>`}
+                                    </button>
+                                    <input id="file-fixa" type="file" accept="image/*" class="hidden" onchange="processFile(event, 'tempImagem')">
+                                    <input name="nome" placeholder="Nome da Conta" value="${state.editando?.nome || ''}" class="flex-1 bg-black text-white p-4 rounded-2xl border border-white/10 outline-none text-sm font-bold focus:border-[#CCFF00]" required />
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 mb-8">
+                                    <div class="bg-black p-4 rounded-2xl border border-white/5">
+                                        <span class="text-[8px] text-white/40 font-black uppercase block mb-1">Dia Venc.</span>
+                                        <input name="diaVencimento" type="number" min="1" max="31" value="${state.editando?.diaVencimento || 10}" class="bg-transparent text-white font-black text-xl outline-none w-full" required />
+                                    </div>
+                                    <div class="bg-black p-4 rounded-2xl border border-white/5">
+                                        <span class="text-[8px] text-white/40 font-black uppercase block mb-1">Setor</span>
+                                        <select name="categoria" class="bg-transparent text-[#CCFF00] font-black text-[10px] outline-none w-full uppercase">
+                                            ${CATEGORIAS.map(cat => `<option value="${cat.id}" class="bg-black" ${state.editando?.categoria === cat.id ? 'selected' : ''}>${cat.nome}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full py-5 rounded-3xl bg-[#CCFF00] text-black font-black uppercase tracking-[0.2em] text-[11px]">Salvar Cadastro</button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.modal === 'excluir') {
+                return `
+                    <div class="fixed inset-0 bg-black/95 z-[999] flex items-center justify-center p-8 backdrop-blur-xl">
+                        <div class="text-center animate-in">
+                            <h3 class="text-white font-black text-lg mb-4 uppercase tracking-widest">Excluir Item?</h3>
+                            <button onclick="handleConfirmExcluir()" class="bg-red-500 text-white font-black py-5 rounded-2xl w-full uppercase text-xs">Sim, Confirmar Exclusão</button>
+                            <button onclick="closeModal()" class="text-white/20 font-black py-4 uppercase text-[9px] w-full">Cancelar</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderFeedback() {
+            if (!state.feedback.ativo) return '';
+            return `
+                <div class="fixed inset-0 bg-black/90 z-[1000] flex items-center justify-center p-10 backdrop-blur-md">
+                    <div class="bg-[#1A1A1A] w-full max-w-sm rounded-[45px] p-10 border border-[#CCFF00]/30 text-center animate-in">
+                        <div class="w-20 h-20 bg-[#CCFF00] rounded-full flex items-center justify-center mb-8 mx-auto"><i class="fa-solid fa-check text-black text-3xl"></i></div>
+                        <h4 class="text-[#CCFF00] font-black uppercase text-xs tracking-widest mb-4">Sucesso!</h4>
+                        <p class="text-white/50 text-xs italic">"${state.feedback.frase}"</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function calculateStats() {
+            let filtrada = (state.dados.contas || []).filter(c => {
+                const d = new Date(c.data + 'T12:00:00');
+                return d.getMonth() === state.dataNavegacao.getMonth() && d.getFullYear() === state.dataNavegacao.getFullYear();
+            });
+            const getSemana = (dataStr) => {
+                const d = new Date(dataStr + 'T12:00:00');
+                const primeiroDia = new Date(d.getFullYear(), d.getMonth(), 1);
+                return Math.ceil((d.getDate() + primeiroDia.getDay()) / 7);
+            };
+            if (state.semanasAtivas.length) filtrada = filtrada.filter(c => state.semanasAtivas.includes(getSemana(c.data)));
+            const proc = filtrada.map(c => {
+                const pago = (c.historicoPagamentos || []).reduce((a, b) => a + b.valor, 0);
+                return { ...c, totalPago: pago, faltaPagar: Math.max(0, c.valor - pago) };
+            });
+            let listaFinal = [...proc];
+            if (state.filtroStatus === 'pagos') listaFinal = listaFinal.filter(c => c.pago);
+            if (state.filtroStatus === 'pendentes') listaFinal = listaFinal.filter(c => !c.pago);
+            listaFinal.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+            return {
+                lista: listaFinal,
+                pendente: proc.reduce((a, b) => a + b.faltaPagar, 0),
+                pago: proc.reduce((a, b) => a + b.totalPago, 0),
+                qtd: proc.length
+            };
+        }
+
+        function calculateFaturasInfo() {
+            const cartao = state.editando;
+            let filtradas = state.dados.contas.filter(c => c.cartaoId === cartao.id);
+            if (state.filtroMesInicio) filtradas = filtradas.filter(c => c.data.substring(0, 7) >= state.filtroMesInicio);
+            if (state.filtroMesFim) filtradas = filtradas.filter(c => c.data.substring(0, 7) <= state.filtroMesFim);
+            const agrupado = filtradas.reduce((acc, c) => {
+                const mesKey = c.data.substring(0, 7);
+                if (!acc[mesKey]) acc[mesKey] = { mes: mesKey, total: 0, itens: [] };
+                acc[mesKey].total += c.valor;
+                acc[mesKey].itens.push(c);
+                return acc;
+            }, {});
+            return { agrupado: Object.values(agrupado).sort((a, b) => b.mes.localeCompare(a.mes)) };
+        }
+
+        function calculateHistoricoFixaInfo() {
+            const fixa = state.editando;
+            let filtradas = state.dados.contas.filter(c => c.fixaId === fixa.id);
+            // Aplicando o novo filtro de intervalo de data solicitado
+            if (state.filtroMesInicio) filtradas = filtradas.filter(c => c.data.substring(0, 7) >= state.filtroMesInicio);
+            if (state.filtroMesFim) filtradas = filtradas.filter(c => c.data.substring(0, 7) <= state.filtroMesFim);
+            
+            return { lista: filtradas.sort((a, b) => b.data.localeCompare(a.data)) };
+        }
+
+        function getDiaSugerido() {
+            if (state.tipoLancamento === 'cartao' && state.itemSelecionadoId) {
+                const c = state.dados.cartoes.find(x => x.id === state.itemSelecionadoId);
+                return c?.diaFatura || 5;
+            }
+            if (state.tipoLancamento === 'fixa' && state.itemSelecionadoId) {
+                const f = state.dados.fixas.find(x => x.id === state.itemSelecionadoId);
+                return f?.diaVencimento || 10;
+            }
+            if (state.editando) return new Date(state.editando.data + 'T12:00:00').getDate();
+            return new Date().getDate();
+        }
+
+        window.setAba = (aba) => { state.abaAtiva = aba; state.modal = null; render(); };
+        window.changeMonth = (val) => { state.dataNavegacao.setMonth(state.dataNavegacao.getMonth() + val); render(); };
+        window.toggleSaldo = () => { state.verSaldo = !state.verSaldo; render(); };
+        window.setSemana = (n) => { 
+            if (n === 'all') state.semanasAtivas = [];
+            else {
+                const idx = state.semanasAtivas.indexOf(n);
+                if (idx > -1) state.semanasAtivas.splice(idx, 1);
+                else state.semanasAtivas.push(n);
+            }
+            render(); 
+        };
+        window.setFiltroStatus = (f) => { state.filtroStatus = f; render(); };
+        window.closeModal = () => { 
+            state.modal = null; state.editando = null; state.tempImagem = null; 
+            state.passoLancamento = 'selecao'; state.itemSelecionadoId = '';
+            state.filtroMesInicio = ""; state.filtroMesFim = "";
+            render(); 
+        };
+        window.openModalLancamento = () => { state.modal = 'lancamento'; state.passoLancamento = 'selecao'; render(); };
+        window.setLancamentoTipo = (tipo) => { state.tipoLancamento = tipo; state.passoLancamento = 'formulario'; render(); };
+        window.backLancamento = () => { 
+            if (state.editando) closeModal();
+            else { state.passoLancamento = 'selecao'; state.itemSelecionadoId = ''; render(); }
+        };
+        window.updateItemSelection = (id) => { state.itemSelecionadoId = id; render(); };
+        window.setCat = (id) => { state.catSelecionada = id; render(); };
+
+        window.toggleExpandFatura = (id) => {
+            const el = document.getElementById(`fatura-detalhe-${id}`);
+            if(el) el.classList.toggle('hidden');
+        }
+        
+        window.handleSalvarConta = async (e) => {
+            e.preventDefault();
+            const f = new FormData(e.target);
+            const repetir = Math.min(parseInt(f.get('repetir')) || 1, 24);
+            const valor = parseFloat(f.get('valor'));
+            const dia = parseInt(f.get('dia'));
+            let nomeBase = "";
+            let dataBaseStr = "";
+            let imagem = state.tempImagem || state.editando?.imagem;
+            let categoria = 'outros';
+            if (state.tipoLancamento === 'conta') {
+                nomeBase = f.get('nome');
+                const hoje = new Date();
+                dataBaseStr = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+                categoria = state.catSelecionada;
+            } else if (state.tipoLancamento === 'cartao') {
+                const obj = state.dados.cartoes.find(c => c.id === state.itemSelecionadoId);
+                nomeBase = `Fatura ${obj.banco}`;
+                dataBaseStr = `${new Date().toISOString().substring(0, 7)}-${String(dia).padStart(2, '0')}`;
+                imagem = obj.imagem;
+                categoria = 'compras';
+            } else if (state.tipoLancamento === 'fixa') {
+                const obj = state.dados.fixas.find(f => f.id === state.itemSelecionadoId);
+                nomeBase = obj.nome;
+                dataBaseStr = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+                imagem = obj.imagem;
+                categoria = obj.categoria || 'casa';
+            }
+            let novas = [...state.dados.contas];
+            if (state.editando) novas = novas.filter(x => x.id !== state.editando.id);
+            const baseId = Date.now();
+            for (let i = 0; i < repetir; i++) {
+                const d = new Date(dataBaseStr + 'T12:00:00');
+                d.setMonth(d.getMonth() + i);
+                novas.push({
+                    id: `${baseId}-${i}`,
+                    nome: repetir > 1 ? `${nomeBase} (${i+1}/${repetir})` : nomeBase,
+                    valor: valor,
+                    data: d.toISOString().split('T')[0],
+                    pago: state.editando ? state.editando.pago : false,
+                    historicoPagamentos: state.editando ? state.editando.historicoPagamentos : [],
+                    categoria, imagem, tipo: state.tipoLancamento,
+                    cartaoId: state.tipoLancamento === 'cartao' ? state.itemSelecionadoId : null,
+                    fixaId: state.tipoLancamento === 'fixa' ? state.itemSelecionadoId : null
+                });
+            }
+            state.dados.contas = novas;
+            closeModal();
+            await salvarFirebase();
+        };
+
+        window.openModalPagar = (id) => {
+            state.editando = state.dados.contas.find(x => x.id === id);
+            state.modal = 'pagar';
+            render();
+        };
+
+        window.togglePagarBtn = (val) => {
+            const btn = document.getElementById('btn-confirmar-pagamento');
+            if (!btn) return;
+            const v = parseFloat(val);
+            if (v > 0) {
+                btn.disabled = false;
+                btn.classList.remove('bg-white/5', 'text-white/10');
+                btn.classList.add('bg-[#CCFF00]', 'text-black');
+            } else {
+                btn.disabled = true;
+                btn.classList.add('bg-white/5', 'text-white/10');
+                btn.classList.remove('bg-[#CCFF00]', 'text-black');
+            }
+        };
+
+        window.handleConfirmarPagamento = async () => {
+            const input = document.getElementById('pagamento-input');
+            const valor = parseFloat(input.value);
+            const frase = FRASES_ALIVIO[Math.floor(Math.random() * FRASES_ALIVIO.length)];
+            const novoPagto = { id: Date.now().toString(), valor, data: new Date().toISOString() };
+            state.dados.contas = state.dados.contas.map(c => {
+                if (c.id === state.editando.id) {
+                    const hist = [...(c.historicoPagamentos || []), novoPagto];
+                    const total = hist.reduce((a,b)=>a+b.valor,0);
+                    return { ...c, historicoPagamentos: hist, pago: total >= c.valor };
+                }
+                return c;
+            });
+            state.feedback = { ativo: true, status: 'sucesso', frase };
+            render();
+            await salvarFirebase();
+            setTimeout(() => {
+                state.feedback.ativo = false;
+                const atualizado = state.dados.contas.find(x => x.id === state.editando.id);
+                state.editando = atualizado;
+                render();
+            }, 2000);
+        };
+
+        window.handleDeletePagamento = async (pId) => {
+            state.dados.contas = state.dados.contas.map(c => {
+                if (c.id === state.editando.id) {
+                    const hist = (c.historicoPagamentos || []).filter(h => h.id !== pId);
+                    const total = hist.reduce((a,b)=>a+b.valor,0);
+                    return { ...c, historicoPagamentos: hist, pago: total >= c.valor };
+                }
+                return c;
+            });
+            state.editando = state.dados.contas.find(x => x.id === state.editando.id);
+            render();
+            await salvarFirebase();
+        };
+
+        window.openModalCartao = () => { state.modal = 'cartao'; state.corSelecionada = CORES_ESTILO[0]; render(); };
+        window.editCartao = (id) => { 
+            state.editando = state.dados.cartoes.find(x => x.id === id); 
+            state.corSelecionada = state.editando.cor || CORES_ESTILO[0];
+            state.modal = 'cartao'; render(); 
+        };
+        window.setCorCartao = (id) => { state.corSelecionada = CORES_ESTILO.find(c => c.id === id); render(); };
+        window.handleSalvarCartao = async (e) => {
+            e.preventDefault();
+            const f = new FormData(e.target);
+            const novo = {
+                id: state.editando?.id || Date.now().toString(),
+                banco: f.get('banco'), titular: f.get('titular'),
+                diaFatura: parseInt(f.get('diaFatura')),
+                imagem: state.tempImagem || state.editando?.imagem,
+                cor: state.corSelecionada
+            };
+            if (state.editando) state.dados.cartoes = state.dados.cartoes.map(x => x.id === novo.id ? novo : x);
+            else state.dados.cartoes.push(novo);
+            closeModal(); await salvarFirebase();
+        };
+
+        window.openModalFixa = () => { state.modal = 'fixa'; render(); };
+        window.editFixa = (id) => { state.editando = state.dados.fixas.find(x => x.id === id); state.modal = 'fixa'; render(); };
+        window.handleSalvarFixa = async (e) => {
+            e.preventDefault();
+            const f = new FormData(e.target);
+            const novo = {
+                id: state.editando?.id || Date.now().toString(),
+                nome: f.get('nome'), diaVencimento: parseInt(f.get('diaVencimento')),
+                categoria: f.get('categoria'), imagem: state.tempImagem || state.editando?.imagem
+            };
+            if (state.editando) state.dados.fixas = state.dados.fixas.map(x => x.id === novo.id ? novo : x);
+            else state.dados.fixas.push(novo);
+            closeModal(); await salvarFirebase();
+        };
+
+        window.confirmDelete = (id, tipo) => { state.itemExcluir = { id, tipo }; state.modal = 'excluir'; render(); };
+        window.handleConfirmExcluir = async () => {
+            const { id, tipo } = state.itemExcluir;
+            if (tipo === 'conta') state.dados.contas = state.dados.contas.filter(x => x.id !== id);
+            else if (tipo === 'cartao_db') state.dados.cartoes = state.dados.cartoes.filter(x => x.id !== id);
+            else if (tipo === 'fixa') state.dados.fixas = state.dados.fixas.filter(x => x.id !== id);
+            closeModal(); await salvarFirebase();
+        };
+
+        window.editConta = (id) => {
+            const c = state.dados.contas.find(x => x.id === id);
+            state.editando = c;
+            state.tipoLancamento = c.tipo || 'conta';
+            state.catSelecionada = c.categoria || 'outros';
+            state.itemSelecionadoId = c.cartaoId || c.fixaId || '';
+            state.passoLancamento = 'formulario';
+            state.modal = 'lancamento';
+            render();
+        };
+        window.editContaFromModal = (id) => { closeModal(); editConta(id); };
+        window.openFaturas = (id) => { state.editando = state.dados.cartoes.find(x => x.id === id); state.modal = 'faturas'; render(); };
+        window.openHistoricoFixa = (id) => { state.editando = state.dados.fixas.find(x => x.id === id); state.modal = 'historico'; render(); };
+        window.setFiltroMes = (tipo, val) => {
+            if (tipo === 'inicio') state.filtroMesInicio = val;
+            else state.filtroMesFim = val;
+            render();
+        };
+
+        window.triggerFile = (id) => document.getElementById(`file-${id}`).click();
+        window.processFile = (e, target) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.src = ev.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 120; canvas.height = 120;
+                    canvas.getContext('2d').drawImage(img, 0, 0, 120, 120);
+                    state[target] = canvas.toDataURL('image/jpeg', 0.5);
+                    render();
+                };
+            };
+            reader.readAsDataURL(file);
+        };
+
+        async function salvarFirebase() {
+            if (!state.user) return;
+            const ref = doc(db, 'apps', APP_ID, 'dados', 'financeiro');
+            try {
+                await setDoc(ref, { ...state.dados, lastUpdate: Date.now() }, { merge: true });
+            } catch (e) { console.error("Erro ao salvar:", e); }
+        }
+
+        const init = async () => {
+            onAuthStateChanged(auth, u => {
+                if (u) {
+                    state.user = u;
+                    const ref = doc(db, 'apps', APP_ID, 'dados', 'financeiro');
+                    onSnapshot(ref, snap => {
+                        if (snap.exists()) {
+                            const d = snap.data();
+                            state.dados = {
+                                contas: Array.isArray(d?.contas) ? d.contas : [],
+                                cartoes: Array.isArray(d?.cartoes) ? d.cartoes : [],
+                                fixas: Array.isArray(d?.fixas) ? d.fixas : []
+                            };
+                            render();
+                        }
+                    });
+                } else {
+                    signInAnonymously(auth);
+                }
+            });
+        };
+        init();
+    </script>
+</body>
+</html>
