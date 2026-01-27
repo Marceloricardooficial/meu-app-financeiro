@@ -8,7 +8,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Financeiro">
-    <!-- Manifest PWA -->
+    
+       <!-- Manifest PWA -->
 <link rel="manifest" href="./manifest.json">
 
 <!-- Cor da barra / status bar -->
@@ -170,9 +171,9 @@
         ];
 
         let state = {
-            isLogged: false, // Controle de login
-            currentUser: null, // Usuário logado
-            user: null, // Firebase user
+            isLogged: false,
+            currentUser: null,
+            user: null,
             dados: { contas: [], cartoes: [], fixas: [], usuarios: usuariosPadrao },
             abaAtiva: 'home',
             filtroStatus: 'todos',
@@ -196,16 +197,29 @@
             faturaFiltroFim: ''
         };
 
-        // --- FUNÇÕES DE LOGIN ---
+        // --- FUNÇÕES DE LOGIN COM LEMBRAR USUÁRIO ---
         window.handleLogin = (e) => {
             e.preventDefault();
             const nome = e.target.nome.value;
             const senha = e.target.senha.value;
+            const lembrar = e.target.lembrar ? e.target.lembrar.checked : false;
             const found = state.dados.usuarios.find(u => u.nome.toLowerCase() === nome.toLowerCase() && u.senha === senha);
             
             if (found) {
                 state.isLogged = true;
                 state.currentUser = found;
+                
+                // Salvar no localStorage se "Lembrar usuário" estiver marcado
+                if (lembrar) {
+                    localStorage.setItem('financeiro_remembered_user', JSON.stringify({
+                        id: found.id,
+                        nome: found.nome,
+                        thumbnail: found.thumbnail
+                    }));
+                } else {
+                    localStorage.removeItem('financeiro_remembered_user');
+                }
+                
                 render();
             } else {
                 alert("Usuário ou senha incorretos.");
@@ -214,13 +228,23 @@
 
         function renderLogin() {
             const root = document.getElementById('root');
+            
+            // Verificar se há usuário salvo para pré-preencher
+            const rememberedUser = JSON.parse(localStorage.getItem('financeiro_remembered_user') || 'null');
+            
             root.innerHTML = `
                 <div class="h-screen bg-black flex flex-col items-center justify-center px-10 animate-in">
                     <img src="https://marceloricardooficial.github.io/meu-app-financeiro/images/header2.png" alt="Logo" class="w-48 mb-16">
                     
                     <form onsubmit="handleLogin(event)" class="w-full max-w-sm space-y-4">
-                        <input name="nome" type="text" placeholder="Usuário" class="login-input" required>
+                        <input name="nome" type="text" placeholder="Usuário" value="${rememberedUser ? rememberedUser.nome : ''}" class="login-input" required>
                         <input name="senha" type="password" placeholder="Senha" class="login-input" required>
+                        
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="lembrar" name="lembrar" class="w-4 h-4 rounded bg-black border border-[#CCFF00] text-[#CCFF00] focus:ring-0" ${rememberedUser ? 'checked' : ''}>
+                            <label for="lembrar" class="text-[#CCFF00] text-[10px] font-bold uppercase tracking-widest">Manter login ativo</label>
+                        </div>
+                        
                         <button type="submit" class="w-full py-5 rounded-2xl bg-[#CCFF00] text-black font-black uppercase tracking-widest text-sm shadow-[0_10px_30px_rgba(204,255,0,0.2)] active:scale-95 transition-all">Entrar</button>
                     </form>
                     
@@ -330,10 +354,10 @@
                         
                         <div class="flex items-center gap-4">
                             <div class="relative cursor-pointer active:scale-90 transition-transform" onclick="openGerenciarUsuarios()">
-                                <i class="fa-solid fa-users-gear text-lg text-white/40"></i>
+                                <i class="fa-solid fa-gear text-lg text-[#CCFF00]"></i>
                             </div>
                             <div class="relative cursor-pointer active:scale-90 transition-transform" onclick="openModalNotificacoes()">
-                                <i class="fa-solid fa-bell text-lg text-white"></i>
+                                <i class="fa-solid fa-bell text-lg text-[#CCFF00]"></i>
                                 ${temNotificacao ? `<div class="notification-badge"></div>` : ''}
                             </div>
                         </div>
@@ -749,6 +773,12 @@
             }
             if (confirm("Deseja realmente remover este usuário?")) {
                 state.dados.usuarios = state.dados.usuarios.filter(u => u.id !== id);
+                // Se o usuário removido for o usuário atual, fazer logout
+                if (state.currentUser && state.currentUser.id === id) {
+                    state.isLogged = false;
+                    state.currentUser = null;
+                    localStorage.removeItem('financeiro_remembered_user');
+                }
                 render();
                 salvarFirebase();
             }
@@ -1377,6 +1407,17 @@
                                 fixas: Array.isArray(d?.fixas) ? d.fixas : [],
                                 usuarios: Array.isArray(d?.usuarios) ? d.usuarios : usuariosPadrao
                             };
+                            
+                            // Verificar se há usuário lembrado para login automático
+                            const rememberedUser = JSON.parse(localStorage.getItem('financeiro_remembered_user') || 'null');
+                            if (rememberedUser) {
+                                const found = state.dados.usuarios.find(u => u.id === rememberedUser.id);
+                                if (found) {
+                                    state.isLogged = true;
+                                    state.currentUser = found;
+                                }
+                            }
+                            
                             render();
                         }
                     });
@@ -1391,7 +1432,5 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./service-worker.js');
   });
 }
-</script>
-</script>
 </body>
 </html>
