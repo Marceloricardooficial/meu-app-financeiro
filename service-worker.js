@@ -3,13 +3,8 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    self.clients.claim()
-  );
+  self.clients.claim();
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
-  );
-});
+// fetch vazio só pra manter ativo
+self.addEventListener('fetch', event => {});
