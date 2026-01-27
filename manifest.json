@@ -1,20 +1,23 @@
 {
+  "id": "bora-pagar-v2",
   "name": "Bora Pagar",
   "short_name": "Bora Pagar",
-  "start_url": "/meu-app-financeiro/",
+  "start_url": "/meu-app-financeiro/index.html?v=2",
+  "scope": "/meu-app-financeiro/",
   "display": "standalone",
   "background_color": "#000000",
-  "theme_color": "#39ff14",
+  "theme_color": "#bdea57",
   "icons": [
     {
-      "src": "https://marceloricardooficial.github.io/meu-app-financeiro/assets/icons/icon-192.png",
+      "src": "/meu-app-financeiro/assets/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://marceloricardooficial.github.io/meu-app-financeiro/assets/icons/icon-512.png",
+      "src": "/meu-app-financeiro/assets/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
   ]
 }
+
