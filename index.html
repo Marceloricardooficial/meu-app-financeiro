@@ -1426,11 +1426,12 @@
         };
         init();
     </script>
-    <script>
+ <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js');
+    navigator.serviceWorker.register('/meu-app-financeiro/service-worker.js');
   });
 }
+</script>
 </body>
 </html>
