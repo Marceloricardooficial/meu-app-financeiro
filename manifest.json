@@ -1,7 +1,7 @@
 {
-  "id": "bora-pagar-v2",
+  "id": "/borapagar-v2",
   "name": "Bora Pagar",
-  "short_name": "Bora Pagar",
+  "short_name": "BoraPagar",
   "start_url": "/meu-app-financeiro/index.html?v=2",
   "scope": "/meu-app-financeiro/",
   "display": "standalone",
@@ -20,4 +20,3 @@
     }
   ]
 }
-
