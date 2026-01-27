@@ -1,10 +1,9 @@
-self.addEventListener('install', event => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener('activate', () => {
   self.clients.claim();
 });
 
-// fetch vazio só pra manter ativo
-self.addEventListener('fetch', event => {});
+self.addEventListener('fetch', () => {});
