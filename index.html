@@ -8,8 +8,20 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Financeiro">
-    
-    <link rel="icon" href="https://marceloricardooficial.github.io/meu-app-financeiro/assets/icons/icon-512.png">
+    <!-- Manifest PWA -->
+<link rel="manifest" href="./manifest.json">
+
+<!-- Cor da barra / status bar -->
+<meta name="theme-color" content="#bdea57">
+
+<!-- Ícone fallback -->
+<link rel="icon" type="image/png" href="./assets/icons/icon-192.png">
+
+<!-- Apple -->
+<link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bora Pagar">
     
     <title>Financeiro 2026 | Gestão de Elite</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -1373,5 +1385,14 @@
         };
         init();
     </script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(reg => console.log('Service Worker registrado', reg))
+        .catch(err => console.error('Erro ao registrar SW', err));
+    });
+  }
+</script>
 </body>
 </html>
