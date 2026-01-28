@@ -238,6 +238,48 @@
             transform: translateX(26px);
             background-color: #000;
         }
+
+        /* Estilos para a nova aba Verificar */
+        .verificar-header {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .verificar-month-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        .verificar-month-display {
+            font-size: 14px;
+            font-weight: 800;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            min-width: 140px;
+            text-align: center;
+        }
+        .verificar-button {
+            width: 100%;
+            padding: 12px;
+            background: #CCFF00;
+            color: black;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }
+        .verificar-button:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body class="pb-44">
@@ -328,7 +370,10 @@
             expandedCategory: null,
             faturaFiltroIni: '',
             faturaFiltroFim: '',
-            notificacaoAba: 'vencidas' // Nova propriedade para controlar aba de notificações
+            notificacaoAba: 'vencidas',
+            verificarMes: new Date().getMonth(),
+            verificarAno: new Date().getFullYear(),
+            notificacoesVerificar: []
         };
 
         // --- FUNÇÕES DE LOGIN COM LEMBRAR USUÁRIO ---
@@ -423,18 +468,15 @@
             return (state.dados.contas || []).filter(c => !c.pago && c.data < hoje);
         }
 
-        function getNotificacoesEsquecimento() {
+        // Função para obter notificações de esquecimento (antiga "Lembrete" agora "Verificar")
+        function getNotificacoesVerificar() {
             const notificacoes = [];
             const hoje = new Date();
-            const mesAtual = hoje.getMonth();
-            const anoAtual = hoje.getFullYear();
+            const mesSelecionado = state.verificarMes;
+            const anoSelecionado = state.verificarAno;
             
-            // Mês atual e próximo mês
-            const proximoMes = mesAtual === 11 ? 0 : mesAtual + 1;
-            const anoProximo = mesAtual === 11 ? anoAtual + 1 : anoAtual;
-            
-            // Função para verificar se existe lançamento no mês atual ou próximo
-            const temLancamentoNoPeriodo = (id, tipo) => {
+            // Função para verificar se existe lançamento no mês selecionado
+            const temLancamentoNoMes = (id, tipo) => {
                 return state.dados.contas.some(c => {
                     const dataConta = new Date(c.data + 'T12:00:00');
                     const mesConta = dataConta.getMonth();
@@ -444,23 +486,22 @@
                     if (tipo === 'cartao' && c.cartaoId !== id) return false;
                     if (tipo === 'fixa' && c.fixaId !== id) return false;
                     
-                    // Verificar se está no mês atual ou próximo
-                    return (mesConta === mesAtual && anoConta === anoAtual) || 
-                           (mesConta === proximoMes && anoConta === anoProximo);
+                    // Verificar se está no mês selecionado
+                    return (mesConta === mesSelecionado && anoConta === anoSelecionado);
                 });
             };
             
             // Verificar cartões com lembrete ativado
             (state.dados.cartoes || []).forEach(cartao => {
-                if (cartao.lembrarSemLancamento && !temLancamentoNoPeriodo(cartao.id, 'cartao')) {
-                    const mesNome = hoje.toLocaleDateString('pt-br', { month: 'long' });
+                if (cartao.lembrarSemLancamento && !temLancamentoNoMes(cartao.id, 'cartao')) {
+                    const mesNome = new Date(anoSelecionado, mesSelecionado).toLocaleDateString('pt-br', { month: 'long' });
                     notificacoes.push({
-                        tipo: 'esquecimento',
+                        tipo: 'verificar',
                         origem: 'cartao',
                         id: cartao.id,
                         nome: cartao.banco,
                         imagem: cartao.imagem,
-                        mensagem: `Acho que você esqueceu de mim no mês de ${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}`,
+                        mensagem: `Acho que você esqueceu de mim em ${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}/${anoSelecionado}`,
                         cor: cartao.cor?.hex || '#1A1A1A'
                     });
                 }
@@ -468,15 +509,15 @@
             
             // Verificar contas fixas com lembrete ativado
             (state.dados.fixas || []).forEach(fixa => {
-                if (fixa.lembrarSemLancamento && !temLancamentoNoPeriodo(fixa.id, 'fixa')) {
-                    const mesNome = hoje.toLocaleDateString('pt-br', { month: 'long' });
+                if (fixa.lembrarSemLancamento && !temLancamentoNoMes(fixa.id, 'fixa')) {
+                    const mesNome = new Date(anoSelecionado, mesSelecionado).toLocaleDateString('pt-br', { month: 'long' });
                     notificacoes.push({
-                        tipo: 'esquecimento',
+                        tipo: 'verificar',
                         origem: 'fixa',
                         id: fixa.id,
                         nome: fixa.nome,
                         imagem: fixa.imagem,
-                        mensagem: `Acho que você esqueceu de mim no mês de ${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}`,
+                        mensagem: `Acho que você esqueceu de mim em ${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}/${anoSelecionado}`,
                         cor: '#000000'
                     });
                 }
@@ -485,8 +526,31 @@
             return notificacoes;
         }
 
+        window.verificarLancamentos = () => {
+            state.notificacoesVerificar = getNotificacoesVerificar();
+            render();
+        };
+
+        window.setVerificarMes = (incremento) => {
+            let novoMes = state.verificarMes + incremento;
+            let novoAno = state.verificarAno;
+            
+            if (novoMes < 0) {
+                novoMes = 11;
+                novoAno--;
+            } else if (novoMes > 11) {
+                novoMes = 0;
+                novoAno++;
+            }
+            
+            state.verificarMes = novoMes;
+            state.verificarAno = novoAno;
+            state.notificacoesVerificar = [];
+            render();
+        };
+
         function temNotificacoes() {
-            return getContasVencidas().length > 0 || getNotificacoesEsquecimento().length > 0;
+            return getContasVencidas().length > 0 || getNotificacoesVerificar().length > 0;
         }
 
         // --- RENDERIZAÇÃO PRINCIPAL ---
@@ -1087,7 +1151,7 @@
 
             if (state.modal === 'notificacoes') {
                 const vencidas = getContasVencidas();
-                const esquecimento = getNotificacoesEsquecimento();
+                const esquecimento = state.notificacoesVerificar;
                 
                 return `
                     <div class="fixed inset-0 bg-black/60 backdrop-blur-xl z-[900] flex items-end justify-center" onclick="if(event.target === this) closeModal()">
@@ -1099,8 +1163,8 @@
                                 <div class="notification-tab ${state.notificacaoAba === 'vencidas' ? 'active' : ''}" onclick="setNotificacaoAba('vencidas')">
                                     Vencidas (${vencidas.length})
                                 </div>
-                                <div class="notification-tab ${state.notificacaoAba === 'esquecimento' ? 'active' : ''}" onclick="setNotificacaoAba('esquecimento')">
-                                    Lembretes (${esquecimento.length})
+                                <div class="notification-tab ${state.notificacaoAba === 'verificar' ? 'active' : ''}" onclick="setNotificacaoAba('verificar')">
+                                    Verificar (${esquecimento.length})
                                 </div>
                             </div>
                             
@@ -1129,6 +1193,23 @@
                                 </div>
                             ` : `
                                 <div class="space-y-4">
+                                    <div class="verificar-header">
+                                        <div class="verificar-month-selector">
+                                            <button onclick="setVerificarMes(-1)" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white active:scale-95">
+                                                <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                                            </button>
+                                            <div class="verificar-month-display">
+                                                ${new Date(state.verificarAno, state.verificarMes).toLocaleDateString('pt-br', { month: 'long', year: 'numeric' })}
+                                            </div>
+                                            <button onclick="setVerificarMes(1)" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white active:scale-95">
+                                                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                                            </button>
+                                        </div>
+                                        <div class="verificar-button" onclick="verificarLancamentos()">
+                                            Verificar lançamentos
+                                        </div>
+                                    </div>
+                                    
                                     ${esquecimento.length > 0 ? esquecimento.map(n => `
                                         <div class="notification-item notification-item-esquecimento">
                                             <div class="notification-thumb" style="background: ${n.cor}">
@@ -1145,8 +1226,9 @@
                                         </div>
                                     `).join('') : `
                                         <div class="py-12 text-center">
-                                            <i class="fa-solid fa-check-circle text-4xl text-white/10 mb-4"></i>
-                                            <p class="text-white/40 font-black uppercase text-[10px]">Nenhum lembrete ativo</p>
+                                            <i class="fa-solid fa-magnifying-glass text-4xl text-white/10 mb-4"></i>
+                                            <p class="text-white/40 font-black uppercase text-[10px]">Clique em "Verificar lançamentos"</p>
+                                            <p class="text-white/20 text-[8px] mt-2">Para buscar contas fixas e cartões sem lançamento no mês selecionado</p>
                                         </div>
                                     `}
                                 </div>
@@ -1283,12 +1365,12 @@
                                     </div>
                                 </div>
                                 
-                                <!-- NOVO CAMPO: LEMBRETE DE ESQUECIMENTO -->
+                                <!-- NOVO CAMPO: LEMBRETE DE ESQUECIMENTO COM TEXTO MAIS LEGÍVEL -->
                                 <div class="bg-black p-4 rounded-2xl border border-white/5 mb-8">
                                     <div class="flex items-center justify-between">
                                         <div>
-                                            <span class="text-[8px] text-white/40 font-black uppercase block mb-1">Lembrar se faltar lançamento</span>
-                                            <span class="text-[7px] text-white/20 block">Avisar se não houver lançamento no mês atual ou próximo</span>
+                                            <span class="text-[8px] text-white/60 font-black uppercase block mb-1">Deseja lembrar se faltar lançamento?</span>
+                                            <span class="text-[7px] text-white/40 block">Avisar se não houver lançamento no mês selecionado</span>
                                         </div>
                                         <label class="switch">
                                             <input type="checkbox" name="lembrarSemLancamento" ${editando.lembrarSemLancamento ? 'checked' : ''}>
