@@ -1331,6 +1331,43 @@
             setTimeout(() => { state.feedback.ativo = false; state.modal = null; render(); }, 2000);
         };
 
+        // CORREÇÃO DO BUG: FUNÇÃO PARA EXCLUIR PAGAMENTO PARCIAL
+        window.excluirPagamentoParcial = async (pagamentoId) => {
+            try {
+                if (!state.editando) return;
+
+                // Encontrar e atualizar a conta diretamente no array state.dados.contas
+                const contaIndex = state.dados.contas.findIndex(c => c.id === state.editando.id);
+                if (contaIndex === -1) return;
+
+                // Criar cópia atualizada da conta com o pagamento removido
+                let contaAtualizada = { ...state.dados.contas[contaIndex] };
+                contaAtualizada.historicoPagamentos = contaAtualizada.historicoPagamentos || [];
+                
+                // CORREÇÃO CRÍTICA: Filtrar corretamente removendo o pagamento pelo ID
+                contaAtualizada.historicoPagamentos = contaAtualizada.historicoPagamentos.filter(p => p.id !== pagamentoId);
+                
+                // Recalcular se a conta está paga
+                const totalPago = contaAtualizada.historicoPagamentos.reduce((soma, p) => soma + p.valor, 0);
+                contaAtualizada.pago = totalPago >= contaAtualizada.valor;
+
+                // Atualizar a conta no array original
+                state.dados.contas[contaIndex] = contaAtualizada;
+                
+                // Atualizar também o state.editando para refletir no modal
+                state.editando = contaAtualizada;
+
+                // Salvar no Firebase
+                await salvarFirebase();
+                
+                // Re-renderizar a interface
+                render();
+            } catch (error) {
+                console.error("Erro ao excluir pagamento parcial:", error);
+                alert("Erro ao excluir pagamento parcial. Tente novamente.");
+            }
+        };
+
         window.openModalCartao = () => { state.modal = 'cartao'; state.corSelecionada = CORES_ESTILO[0]; render(); };
         window.editCartao = (id) => { state.editando = state.dados.cartoes.find(x => x.id === id); state.corSelecionada = state.editando.cor || CORES_ESTILO[0]; state.modal = 'cartao'; render(); };
         window.handleSalvarCartao = async (e) => {
