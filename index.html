@@ -104,6 +104,140 @@
         .login-input:focus {
             border-color: #CCFF00;
         }
+        
+        /* Estilo para input type="date" */
+        input[type="date"] {
+            color-scheme: dark;
+        }
+        .dark-date-input {
+            background: transparent;
+            color: white;
+            font-family: inherit;
+            font-size: 16px;
+            border: none;
+            outline: none;
+            width: 100%;
+        }
+        .light-date-input {
+            background: transparent;
+            color: #374151;
+            font-family: inherit;
+            font-size: 16px;
+            border: none;
+            outline: none;
+            width: 100%;
+        }
+
+        /* NOTIFICAÇÕES - ESTILOS ADICIONAIS */
+        .notification-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 4px;
+            margin-bottom: 16px;
+        }
+        .notification-tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .notification-tab.active {
+            background: #CCFF00;
+            color: #000;
+        }
+        .notification-tab:not(.active) {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .notification-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .notification-item-vencida {
+            border-left: 3px solid #FF4444;
+        }
+        .notification-item-esquecimento {
+            border-left: 3px solid #CCFF00;
+        }
+        .notification-thumb {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .notification-content {
+            flex: 1;
+        }
+        .notification-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2px;
+        }
+        .notification-subtitle {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 600;
+        }
+        
+        /* Switch customizado */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .3s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #CCFF00;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+            background-color: #000;
+        }
     </style>
 </head>
 <body class="pb-44">
@@ -193,7 +327,8 @@
             relFiltroDataFim: new Date().toISOString().split('T')[0],
             expandedCategory: null,
             faturaFiltroIni: '',
-            faturaFiltroFim: ''
+            faturaFiltroFim: '',
+            notificacaoAba: 'vencidas' // Nova propriedade para controlar aba de notificações
         };
 
         // --- FUNÇÕES DE LOGIN COM LEMBRAR USUÁRIO ---
@@ -282,6 +417,78 @@
             await salvarFirebase();
         };
 
+        // --- FUNÇÕES DE NOTIFICAÇÕES ---
+        function getContasVencidas() {
+            const hoje = new Date().toISOString().split('T')[0];
+            return (state.dados.contas || []).filter(c => !c.pago && c.data < hoje);
+        }
+
+        function getNotificacoesEsquecimento() {
+            const notificacoes = [];
+            const hoje = new Date();
+            const mesAtual = hoje.getMonth();
+            const anoAtual = hoje.getFullYear();
+            
+            // Mês atual e próximo mês
+            const proximoMes = mesAtual === 11 ? 0 : mesAtual + 1;
+            const anoProximo = mesAtual === 11 ? anoAtual + 1 : anoAtual;
+            
+            // Função para verificar se existe lançamento no mês atual ou próximo
+            const temLancamentoNoPeriodo = (id, tipo) => {
+                return state.dados.contas.some(c => {
+                    const dataConta = new Date(c.data + 'T12:00:00');
+                    const mesConta = dataConta.getMonth();
+                    const anoConta = dataConta.getFullYear();
+                    
+                    // Verificar se a conta pertence ao item (cartão ou fixa)
+                    if (tipo === 'cartao' && c.cartaoId !== id) return false;
+                    if (tipo === 'fixa' && c.fixaId !== id) return false;
+                    
+                    // Verificar se está no mês atual ou próximo
+                    return (mesConta === mesAtual && anoConta === anoAtual) || 
+                           (mesConta === proximoMes && anoConta === anoProximo);
+                });
+            };
+            
+            // Verificar cartões com lembrete ativado
+            (state.dados.cartoes || []).forEach(cartao => {
+                if (cartao.lembrarSemLancamento && !temLancamentoNoPeriodo(cartao.id, 'cartao')) {
+                    const mesNome = hoje.toLocaleDateString('pt-br', { month: 'long' });
+                    notificacoes.push({
+                        tipo: 'esquecimento',
+                        origem: 'cartao',
+                        id: cartao.id,
+                        nome: cartao.banco,
+                        imagem: cartao.imagem,
+                        mensagem: `Acho que você esqueceu de mim no mês de ${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}`,
+                        cor: cartao.cor?.hex || '#1A1A1A'
+                    });
+                }
+            });
+            
+            // Verificar contas fixas com lembrete ativado
+            (state.dados.fixas || []).forEach(fixa => {
+                if (fixa.lembrarSemLancamento && !temLancamentoNoPeriodo(fixa.id, 'fixa')) {
+                    const mesNome = hoje.toLocaleDateString('pt-br', { month: 'long' });
+                    notificacoes.push({
+                        tipo: 'esquecimento',
+                        origem: 'fixa',
+                        id: fixa.id,
+                        nome: fixa.nome,
+                        imagem: fixa.imagem,
+                        mensagem: `Acho que você esqueceu de mim no mês de ${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}`,
+                        cor: '#000000'
+                    });
+                }
+            });
+            
+            return notificacoes;
+        }
+
+        function temNotificacoes() {
+            return getContasVencidas().length > 0 || getNotificacoesEsquecimento().length > 0;
+        }
+
         // --- RENDERIZAÇÃO PRINCIPAL ---
         function render() {
             const root = document.getElementById('root');
@@ -324,15 +531,9 @@
             return GABARITO_2026[data.getMonth()]?.length || 5;
         }
 
-        function getContasVencidas() {
-            const hoje = new Date().toISOString().split('T')[0];
-            return (state.dados.contas || []).filter(c => !c.pago && c.data < hoje);
-        }
-
         function renderHeader() {
             if (state.abaAtiva !== 'home' && state.abaAtiva !== 'usuarios') return '';
-            const vencidas = getContasVencidas();
-            const temNotificacao = vencidas.length > 0;
+            const temNotificacao = temNotificacoes();
 
             return `
                 <div class="pb-24 pt-12 px-6 bg-[#121212]">
@@ -367,8 +568,14 @@
 
         window.openModalNotificacoes = () => {
             state.modal = 'notificacoes';
+            state.notificacaoAba = 'vencidas';
             render();
         }
+
+        window.setNotificacaoAba = (aba) => {
+            state.notificacaoAba = aba;
+            render();
+        };
 
         function getFilteredRelatorioData() {
             const todasAsContas = state.dados.contas || [];
@@ -412,6 +619,7 @@
                 return {
                     id: cid,
                     nome: info?.banco || 'Desconhecido',
+                    titular: info?.titular || '',
                     cor: info?.cor?.hex || '#1A1A1A',
                     total,
                     percentual: totalCartoes > 0 ? ((total / totalCartoes) * 100).toFixed(1) : 0
@@ -482,11 +690,11 @@
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-3">
                                         <div class="w-2 h-2 rounded-full" style="background: ${c.cor}"></div>
-                                        <span class="text-[10px] font-black uppercase opacity-60">${c.nome}</span>
+                                        <span class="text-[12px] font-black uppercase text-[#cccccc]">${c.nome}</span>
                                     </div>
                                     <div class="text-right">
-                                        <span class="text-[11px] font-black">R$ ${c.total.toLocaleString('pt-br')}</span>
-                                        <span class="text-[8px] font-bold text-[#CCFF00] ml-2">${c.percentual}%</span>
+                                        <span class="text-[13px] font-black">R$ ${c.total.toLocaleString('pt-br')}</span>
+                                        <span class="text-[10px] font-bold text-[#CCFF00] ml-2">${c.percentual}%</span>
                                     </div>
                                 </div>
                                 <div class="w-full h-[3px] bg-white/5 rounded-full overflow-hidden">
@@ -506,11 +714,14 @@
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-3">
                                         <div class="w-2 h-2 rounded-full" style="background: ${card.cor}"></div>
-                                        <span class="text-[9px] font-black uppercase text-gray-600">${card.nome}</span>
+                                        <div>
+                                            <span class="text-[11px] font-black uppercase text-gray-600">${card.nome}</span>
+                                            <span class="text-[9px] text-gray-400 block">${card.titular}</span>
+                                        </div>
                                     </div>
                                     <div class="flex items-center justify-between flex-1 ml-4">
-                                        <span class="text-[10px] font-bold text-black">R$ ${card.total.toLocaleString('pt-br')}</span>
-                                        <span class="text-[8px] font-black text-gray-400">${card.percentual}%</span>
+                                        <span class="text-[12px] font-bold text-black">R$ ${card.total.toLocaleString('pt-br')}</span>
+                                        <span class="text-[10px] font-black text-gray-400">${card.percentual}%</span>
                                     </div>
                                 </div>
                                 <div class="w-full h-1.5 bg-gray-50 rounded-full overflow-hidden">
@@ -634,7 +845,7 @@
                                 ${['todos', 'pendentes', 'pagos'].map(f => `
                                     <button onclick="setFiltroStatus('${f}')" class="w-9 h-9 rounded-xl flex items-center justify-center transition-all ${state.filtroStatus === f ? 'bg-black text-[#CCFF00] shadow-lg scale-105' : 'text-gray-400'}">
                                         <i class="fa-solid ${f==='todos'?'fa-list-ul':f==='pendentes'?'fa-clock':'fa-check-double'} text-[11px]"></i>
-                                    </button>
+                                </button>
                                 `).join('')}
                             </div>
                             <div class="flex bg-white/50 backdrop-blur-md border border-gray-200 p-1 rounded-2xl gap-1 w-fit">
@@ -694,7 +905,7 @@
                             <button onclick="openModalFixa()" class="flex items-center gap-3 bg-white p-3 pr-6 rounded-full shadow-sm">
                                 <div class="w-10 h-10 rounded-full bg-[#11C76F] flex items-center justify-center text-white"><i class="fa-solid fa-plus"></i></div>
                                 <span class="text-[10px] font-black uppercase text-black tracking-widest">Nova conta fixa</span>
-                            </button>
+                                </button>
                         </div>
                         <div class="divide-y divide-gray-100 bg-white">
                             ${state.dados.fixas.map(f => `
@@ -876,34 +1087,70 @@
 
             if (state.modal === 'notificacoes') {
                 const vencidas = getContasVencidas();
+                const esquecimento = getNotificacoesEsquecimento();
+                
                 return `
                     <div class="fixed inset-0 bg-black/60 backdrop-blur-xl z-[900] flex items-end justify-center" onclick="if(event.target === this) closeModal()">
                         <div class="w-full max-w-md p-8 bg-[#121212] rounded-t-[40px] border-t border-[#CCFF00]/40 animate-in max-h-[80vh] overflow-y-auto no-scrollbar">
                             <div class="w-12 h-1 bg-white/10 rounded-full mx-auto mb-8"></div>
-                            <h3 class="text-white font-black uppercase text-center mb-8 text-xl tracking-widest italic">Contas Vencidas</h3>
+                            <h3 class="text-white font-black uppercase text-center mb-6 text-xl tracking-widest italic">Notificações</h3>
                             
-                            <div class="space-y-6">
-                                ${vencidas.length > 0 ? vencidas.map(c => `
-                                    <div class="flex items-center justify-between gap-4">
-                                        <div class="flex-1 truncate">
-                                            <h4 class="text-white font-bold text-sm truncate">${c.nome}</h4>
-                                            <div class="flex items-center gap-3 mt-0.5">
-                                                <span class="text-[#CCFF00] font-black text-xs">R$ ${c.valor.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
-                                                <span class="text-white/40 uppercase font-black text-[9px]">Vencido em: ${new Date(c.data + 'T12:00:00').toLocaleDateString('pt-br')}</span>
-                                            </div>
-                                        </div>
-                                        <button onclick="closeModal(); setTimeout(() => openModalPagar('${c.id}'), 100)" 
-                                                class="px-4 py-2 rounded-xl bg-[#CCFF00] text-black font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">
-                                            Pagar
-                                        </button>
-                                    </div>
-                                `).join('') : `
-                                    <div class="py-12 text-center">
-                                        <i class="fa-solid fa-check-circle text-4xl text-white/10 mb-4"></i>
-                                        <p class="text-white/40 font-black uppercase text-[10px]">Nenhuma conta vencida</p>
-                                    </div>
-                                `}
+                            <div class="notification-tabs">
+                                <div class="notification-tab ${state.notificacaoAba === 'vencidas' ? 'active' : ''}" onclick="setNotificacaoAba('vencidas')">
+                                    Vencidas (${vencidas.length})
+                                </div>
+                                <div class="notification-tab ${state.notificacaoAba === 'esquecimento' ? 'active' : ''}" onclick="setNotificacaoAba('esquecimento')">
+                                    Lembretes (${esquecimento.length})
+                                </div>
                             </div>
+                            
+                            ${state.notificacaoAba === 'vencidas' ? `
+                                <div class="space-y-4">
+                                    ${vencidas.length > 0 ? vencidas.map(c => `
+                                        <div class="notification-item notification-item-vencida">
+                                            <div class="notification-thumb" style="background: ${CATEGORIAS.find(cat => cat.id === c.categoria)?.cor || '#666'}">
+                                                ${c.imagem ? `<img src="${c.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${CATEGORIAS.find(cat => cat.id === c.categoria)?.icone || 'fa-receipt'} text-white"></i>`}
+                                            </div>
+                                            <div class="notification-content">
+                                                <div class="notification-title">${c.nome}</div>
+                                                <div class="notification-subtitle">Vencido em: ${new Date(c.data + 'T12:00:00').toLocaleDateString('pt-br')}</div>
+                                            </div>
+                                            <button onclick="closeModal(); setTimeout(() => openModalPagar('${c.id}'), 100)" 
+                                                    class="px-4 py-2 rounded-xl bg-[#CCFF00] text-black font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">
+                                                Pagar
+                                            </button>
+                                        </div>
+                                    `).join('') : `
+                                        <div class="py-12 text-center">
+                                            <i class="fa-solid fa-check-circle text-4xl text-white/10 mb-4"></i>
+                                            <p class="text-white/40 font-black uppercase text-[10px]">Nenhuma conta vencida</p>
+                                        </div>
+                                    `}
+                                </div>
+                            ` : `
+                                <div class="space-y-4">
+                                    ${esquecimento.length > 0 ? esquecimento.map(n => `
+                                        <div class="notification-item notification-item-esquecimento">
+                                            <div class="notification-thumb" style="background: ${n.cor}">
+                                                ${n.imagem ? `<img src="${n.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${n.origem === 'cartao' ? 'fa-credit-card' : 'fa-house-chimney'} text-white"></i>`}
+                                            </div>
+                                            <div class="notification-content">
+                                                <div class="notification-title">${n.nome}</div>
+                                                <div class="notification-subtitle">${n.mensagem}</div>
+                                            </div>
+                                            <button onclick="closeModal(); setTimeout(() => ${n.origem === 'cartao' ? 'openFaturas' : 'openFaturasFixas'}('${n.id}'), 100)" 
+                                                    class="px-3 py-2 rounded-xl bg-white/10 text-white font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all">
+                                                Ver
+                                            </button>
+                                        </div>
+                                    `).join('') : `
+                                        <div class="py-12 text-center">
+                                            <i class="fa-solid fa-check-circle text-4xl text-white/10 mb-4"></i>
+                                            <p class="text-white/40 font-black uppercase text-[10px]">Nenhum lembrete ativo</p>
+                                        </div>
+                                    `}
+                                </div>
+                            `}
 
                             <button onclick="closeModal()" class="w-full mt-12 py-5 rounded-3xl bg-white/5 text-white/40 font-black uppercase tracking-[0.2em] text-[11px] active:bg-white/10">Fechar</button>
                         </div>
@@ -912,6 +1159,33 @@
             }
 
             if (state.modal === 'lancamento') {
+                // Função auxiliar para obter a data sugerida formatada
+                const getDataSugerida = () => {
+                    if (state.editando) {
+                        return state.editando.data;
+                    }
+                    
+                    // Data atual como padrão
+                    const hoje = new Date();
+                    const ano = hoje.getFullYear();
+                    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+                    
+                    if (state.tipoLancamento === 'cartao' && state.itemSelecionadoId) {
+                        const cartao = state.dados.cartoes.find(x => x.id === state.itemSelecionadoId);
+                        const dia = String(cartao?.diaFatura || hoje.getDate()).padStart(2, '0');
+                        return `${ano}-${mes}-${dia}`;
+                    } else if (state.tipoLancamento === 'fixa' && state.itemSelecionadoId) {
+                        const fixa = state.dados.fixas.find(x => x.id === state.itemSelecionadoId);
+                        const dia = String(fixa?.diaVencimento || hoje.getDate()).padStart(2, '0');
+                        return `${ano}-${mes}-${dia}`;
+                    } else {
+                        const dia = String(hoje.getDate()).padStart(2, '0');
+                        return `${ano}-${mes}-${dia}`;
+                    }
+                };
+
+                const dataSugerida = getDataSugerida();
+
                 return `
                     <div class="fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
                         <div class="w-full max-w-sm bg-[#1A1A1A] rounded-[32px] border border-[#CCFF00]/30 p-6 animate-in">
@@ -944,9 +1218,22 @@
                                             </div>
                                         </div>
                                         <div class="grid grid-cols-12 gap-2">
-                                            <div class="col-span-6 bg-black/40 p-3 rounded-2xl border border-white/5"><span class="text-[7px] text-white/40 uppercase font-black block mb-1">Valor</span><div class="flex items-center gap-1"><span class="text-[10px] text-[#CCFF00] font-bold">R$</span><input name="valor" type="number" step="0.01" placeholder="0,00" value="${state.editando?.valor || ''}" class="bg-transparent text-[#CCFF00] w-full font-black text-lg outline-none" required /></div></div>
-                                            <div class="col-span-3 bg-black/40 p-3 rounded-2xl border border-white/5"><span class="text-[7px] text-white/40 uppercase font-black block mb-1">Dia</span><input name="dia" type="number" min="1" max="31" value="${getDiaSugerido()}" class="bg-transparent text-white w-full font-black text-lg outline-none" required /></div>
-                                            <div class="col-span-3 bg-black/40 p-3 rounded-2xl border border-white/5"><span class="text-[7px] text-white/40 uppercase font-black block mb-1">Repetir</span><input name="repetir" type="number" min="1" max="24" value="1" class="bg-transparent text-white font-black text-lg outline-none w-full" /></div>
+                                            <div class="col-span-6 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Valor</span>
+                                                <div class="flex items-center gap-1">
+                                                    <span class="text-[10px] text-[#CCFF00] font-bold">R$</span>
+                                                    <input name="valor" type="number" step="0.01" placeholder="0,00" value="${state.editando?.valor || ''}" class="bg-transparent text-[#CCFF00] w-full font-black text-lg outline-none" required />
+                                                </div>
+                                            </div>
+                                            <!-- CAMPO DE DATA COMPLETO (CALENDÁRIO) -->
+                                            <div class="col-span-4 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Data</span>
+                                                <input name="data" type="date" value="${dataSugerida}" class="dark-date-input" required />
+                                            </div>
+                                            <div class="col-span-2 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Repetir</span>
+                                                <input name="repetir" type="number" min="1" max="24" value="${state.editando ? '1' : '1'}" class="bg-transparent text-white font-black text-lg outline-none w-full" />
+                                            </div>
                                         </div>
                                         
                                         <div class="grid grid-cols-3 gap-2 max-h-[120px] overflow-y-auto no-scrollbar">
@@ -968,6 +1255,8 @@
 
             if (state.modal === 'cartao' || state.modal === 'fixa') {
                 const isFixa = state.modal === 'fixa';
+                const editando = state.editando || {};
+                
                 return `
                     <div class="fixed inset-0 bg-black/60 backdrop-blur-xl z-[700] flex items-end justify-center" onclick="if(event.target === this) closeModal()">
                         <div class="w-full max-w-md p-8 bg-[#121212] rounded-t-[40px] border-t border-[#CCFF00]/40 animate-in max-h-[90vh] overflow-y-auto no-scrollbar">
@@ -976,23 +1265,38 @@
                             <form onsubmit="${isFixa ? 'handleSalvarFixa(event)' : 'handleSalvarCartao(event)'}">
                                 <div class="flex gap-4 mb-8">
                                     <button type="button" onclick="triggerFile('${state.modal}')" class="w-20 h-20 rounded-2xl border border-white/10 flex items-center justify-center bg-black overflow-hidden flex-shrink-0">
-                                        ${(state.tempImagem || state.editando?.imagem) ? `<img src="${state.tempImagem || state.editando?.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid fa-camera text-white/10 text-xl"></i>`}
+                                        ${(state.tempImagem || editando.imagem) ? `<img src="${state.tempImagem || editando.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid fa-camera text-white/10 text-xl"></i>`}
                                     </button>
                                     <input id="file-${state.modal}" type="file" accept="image/*" class="hidden" onchange="processFile(event, 'tempImagem')">
                                     <div class="flex-1 space-y-3">
-                                        <input name="${isFixa ? 'nome' : 'banco'}" placeholder="${isFixa ? 'Nome da Conta' : 'Banco?'}" value="${state.editando?.[isFixa ? 'nome' : 'banco'] || ''}" class="w-full bg-black text-white p-4 rounded-2xl border border-white/10 outline-none text-sm font-bold focus:border-[#CCFF00]" required />
-                                        ${!isFixa ? `<input name="titular" placeholder="Titular" value="${state.editando?.titular || ''}" class="w-full bg-black text-white p-4 rounded-2xl border border-white/10 outline-none text-sm font-bold focus:border-[#CCFF00]" required />` : ''}
+                                        <input name="${isFixa ? 'nome' : 'banco'}" placeholder="${isFixa ? 'Nome da Conta' : 'Banco?'}" value="${editando[isFixa ? 'nome' : 'banco'] || ''}" class="w-full bg-black text-white p-4 rounded-2xl border border-white/10 outline-none text-sm font-bold focus:border-[#CCFF00]" required />
+                                        ${!isFixa ? `<input name="titular" placeholder="Titular" value="${editando.titular || ''}" class="w-full bg-black text-white p-4 rounded-2xl border border-white/10 outline-none text-sm font-bold focus:border-[#CCFF00]" required />` : ''}
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4 mb-8">
-                                    <div class="bg-black p-4 rounded-2xl border border-white/5"><span class="text-[8px] text-white/40 font-black uppercase block mb-1">Dia Venc.</span><input name="${isFixa ? 'diaVencimento' : 'diaFatura'}" type="number" min="1" max="31" value="${state.editando?.[isFixa ? 'diaVencimento' : 'diaFatura'] || 5}" class="bg-transparent text-white font-black text-xl outline-none w-full" required /></div>
+                                    <div class="bg-black p-4 rounded-2xl border border-white/5"><span class="text-[8px] text-white/40 font-black uppercase block mb-1">Dia Venc.</span><input name="${isFixa ? 'diaVencimento' : 'diaFatura'}" type="number" min="1" max="31" value="${editando[isFixa ? 'diaVencimento' : 'diaFatura'] || 5}" class="bg-transparent text-white font-black text-xl outline-none w-full" required /></div>
                                     <div class="bg-black p-4 rounded-2xl border border-white/5">
                                         <span class="text-[8px] text-white/40 font-black uppercase block mb-1">Setor / Categoria</span>
                                         <select name="categoria" class="bg-transparent text-[#CCFF00] font-black text-[10px] outline-none w-full uppercase">
-                                            ${CATEGORIAS.map(cat => `<option value="${cat.id}" class="bg-black" ${(state.editando?.categoria === cat.id || (!state.editando && !isFixa && cat.id === 'cartao_credito')) ? 'selected' : ''}>${cat.nome}</option>`).join('')}
+                                            ${CATEGORIAS.map(cat => `<option value="${cat.id}" class="bg-black" ${(editando.categoria === cat.id || (!state.editando && !isFixa && cat.id === 'cartao_credito')) ? 'selected' : ''}>${cat.nome}</option>`).join('')}
                                         </select>
                                     </div>
                                 </div>
+                                
+                                <!-- NOVO CAMPO: LEMBRETE DE ESQUECIMENTO -->
+                                <div class="bg-black p-4 rounded-2xl border border-white/5 mb-8">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <span class="text-[8px] text-white/40 font-black uppercase block mb-1">Lembrar se faltar lançamento</span>
+                                            <span class="text-[7px] text-white/20 block">Avisar se não houver lançamento no mês atual ou próximo</span>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" name="lembrarSemLancamento" ${editando.lembrarSemLancamento ? 'checked' : ''}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
                                 ${!isFixa ? `
                                     <div class="bg-black p-4 rounded-2xl border border-white/5 mb-8"><span class="text-[8px] text-white/40 font-black uppercase block mb-1">Estilo do Cartão</span><div class="flex gap-2">${CORES_ESTILO.map(c => `<div onclick="setCorCartao('${c.id}')" class="w-6 h-6 rounded-full border-2 ${state.corSelecionada?.id === c.id ? 'border-[#CCFF00]' : 'border-transparent'}" style="background-color: ${c.hex}"></div>`).join('')}</div></div>
                                 ` : ''}
@@ -1251,11 +1555,6 @@
             render(); 
         };
 
-        window.getDiaSugerido = () => {
-            if (state.tipoLancamento === 'cartao' && state.itemSelecionadoId) return state.dados.cartoes.find(x => x.id === state.itemSelecionadoId)?.diaFatura || 5;
-            if (state.tipoLancamento === 'fixa' && state.itemSelecionadoId) return state.dados.fixas.find(x => x.id === state.itemSelecionadoId)?.diaVencimento || 10;
-            return new Date().getDate();
-        }
         window.setCat = (id) => { state.catSelecionada = id; render(); };
         window.toggleExpandFatura = (id) => { const el = document.getElementById(`fatura-detalhe-${id}`); if(el) el.classList.toggle('hidden'); }
         window.openFaturas = (id) => { state.editando = state.dados.cartoes.find(x => x.id === id); state.modal = 'faturas'; render(); };
@@ -1272,41 +1571,48 @@
             const f = new FormData(e.target);
             const repetir = Math.min(parseInt(f.get('repetir')) || 1, 24);
             const valor = parseFloat(f.get('valor'));
-            const dia = parseInt(f.get('dia'));
-            let nomeBase = ""; let dataBaseStr = ""; let imagem = state.tempImagem || state.editando?.imagem; let categoria = state.catSelecionada;
+            const dataInput = f.get('data'); // Formato YYYY-MM-DD
+            let nomeBase = ""; let imagem = state.tempImagem || state.editando?.imagem; let categoria = state.catSelecionada;
             
             if (state.tipoLancamento === 'conta') {
                 nomeBase = f.get('nome');
-                dataBaseStr = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
             } else if (state.tipoLancamento === 'cartao') {
                 const obj = state.dados.cartoes.find(c => c.id === state.itemSelecionadoId);
                 nomeBase = `Fatura ${obj.banco}`;
-                dataBaseStr = `${new Date().toISOString().substring(0, 7)}-${String(dia).padStart(2, '0')}`;
                 imagem = obj.imagem; categoria = obj.categoria || 'cartao_credito';
             } else if (state.tipoLancamento === 'fixa') {
                 const obj = state.dados.fixas.find(fx => fx.id === state.itemSelecionadoId);
                 nomeBase = obj.nome;
-                dataBaseStr = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
                 imagem = obj.imagem; categoria = obj.categoria || 'casa';
             }
             
             let novas = [...state.dados.contas];
             if (state.editando) novas = novas.filter(x => x.id !== state.editando.id);
             const baseId = Date.now();
+            
             for (let i = 0; i < repetir; i++) {
-                const d = new Date(dataBaseStr + 'T12:00:00');
-                d.setMonth(d.getMonth() + i);
+                const d = new Date(dataInput + 'T12:00:00');
+                d.setMonth(d.getMonth() + i); // Avança meses para repetição
+                const dataFormatada = d.toISOString().split('T')[0];
+                
                 novas.push({
                     id: `${baseId}-${i}`,
                     nome: repetir > 1 ? `${nomeBase} (${i+1}/${repetir})` : nomeBase,
-                    valor, data: d.toISOString().split('T')[0],
-                    pago: false, historicoPagamentos: [], categoria, imagem, tipo: state.tipoLancamento,
+                    valor, 
+                    data: dataFormatada,
+                    pago: false, 
+                    historicoPagamentos: [], 
+                    categoria, 
+                    imagem, 
+                    tipo: state.tipoLancamento,
                     cartaoId: state.tipoLancamento === 'cartao' ? state.itemSelecionadoId : null,
                     fixaId: state.tipoLancamento === 'fixa' ? state.itemSelecionadoId : null
                 });
             }
+            
             state.dados.contas = novas;
-            closeModal(); await salvarFirebase();
+            closeModal(); 
+            await salvarFirebase();
         };
 
         window.openModalPagar = (id) => { state.editando = state.dados.contas.find(x => x.id === id); state.modal = 'pagar'; render(); };
@@ -1331,7 +1637,6 @@
             setTimeout(() => { state.feedback.ativo = false; state.modal = null; render(); }, 2000);
         };
 
-        // CORREÇÃO DO BUG: FUNÇÃO PARA EXCLUIR PAGAMENTO PARCIAL
         window.excluirPagamentoParcial = async (pagamentoId) => {
             try {
                 if (!state.editando) return;
@@ -1373,7 +1678,17 @@
         window.handleSalvarCartao = async (e) => {
             e.preventDefault();
             const f = new FormData(e.target);
-            const novo = { id: state.editando?.id || Date.now().toString(), banco: f.get('banco'), titular: f.get('titular'), diaFatura: parseInt(f.get('diaFatura')), imagem: state.tempImagem || state.editando?.imagem, cor: state.corSelecionada, categoria: f.get('categoria') };
+            const lembrar = f.get('lembrarSemLancamento') === 'on';
+            const novo = { 
+                id: state.editando?.id || Date.now().toString(), 
+                banco: f.get('banco'), 
+                titular: f.get('titular'), 
+                diaFatura: parseInt(f.get('diaFatura')), 
+                imagem: state.tempImagem || state.editando?.imagem, 
+                cor: state.corSelecionada, 
+                categoria: f.get('categoria'),
+                lembrarSemLancamento: lembrar
+            };
             if (state.editando) state.dados.cartoes = state.dados.cartoes.map(x => x.id === novo.id ? novo : x);
             else state.dados.cartoes.push(novo);
             closeModal(); await salvarFirebase();
@@ -1384,7 +1699,15 @@
         window.handleSalvarFixa = async (e) => {
             e.preventDefault();
             const f = new FormData(e.target);
-            const novo = { id: state.editando?.id || Date.now().toString(), nome: f.get('nome'), diaVencimento: parseInt(f.get('diaVencimento')), categoria: f.get('categoria'), imagem: state.tempImagem || state.editando?.imagem };
+            const lembrar = f.get('lembrarSemLancamento') === 'on';
+            const novo = { 
+                id: state.editando?.id || Date.now().toString(), 
+                nome: f.get('nome'), 
+                diaVencimento: parseInt(f.get('diaVencimento')), 
+                categoria: f.get('categoria'), 
+                imagem: state.tempImagem || state.editando?.imagem,
+                lembrarSemLancamento: lembrar
+            };
             if (state.editando) state.dados.fixas = state.dados.fixas.map(x => x.id === novo.id ? novo : x);
             else state.dados.fixas.push(novo);
             closeModal(); await salvarFirebase();
@@ -1439,8 +1762,8 @@
                             const d = snap.data();
                             state.dados = {
                                 contas: Array.isArray(d?.contas) ? d.contas : [],
-                                cartoes: Array.isArray(d?.cartoes) ? d.cartoes : [],
-                                fixas: Array.isArray(d?.fixas) ? d.fixas : [],
+                                cartoes: Array.isArray(d?.cartoes) ? d.cartoes.map(c => ({ ...c, lembrarSemLancamento: c.lembrarSemLancamento || false })) : [],
+                                fixas: Array.isArray(d?.fixas) ? d.fixas.map(f => ({ ...f, lembrarSemLancamento: f.lembrarSemLancamento || false })) : [],
                                 usuarios: Array.isArray(d?.usuarios) ? d.usuarios : usuariosPadrao
                             };
                             
