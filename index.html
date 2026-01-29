@@ -324,6 +324,7 @@
             { id: 'compras', nome: 'Compras', icone: 'fa-cart-shopping', cor: '#FF9800' },
             { id: 'lazer', nome: 'Lazer', icone: 'fa-gamepad', cor: '#4CAF50' },
             { id: 'saude', nome: 'Saúde', icone: 'fa-heart-pulse', cor: '#F44336' },
+            { id: 'gasto_diario', nome: 'Gasto Diário', icone: 'fa-coins', cor: '#FFC107' },
             { id: 'outros', nome: 'Outros', icone: 'fa-ellipsis', cor: '#607D8B' },
         ];
 
@@ -1260,6 +1261,9 @@
                         const fixa = state.dados.fixas.find(x => x.id === state.itemSelecionadoId);
                         const dia = String(fixa?.diaVencimento || hoje.getDate()).padStart(2, '0');
                         return `${ano}-${mes}-${dia}`;
+                    } else if (state.tipoLancamento === 'gasto_diario') {
+                        const dia = String(hoje.getDate()).padStart(2, '0');
+                        return `${ano}-${mes}-${dia}`;
                     } else {
                         const dia = String(hoje.getDate()).padStart(2, '0');
                         return `${ano}-${mes}-${dia}`;
@@ -1279,6 +1283,7 @@
                                         <button onclick="setLancamentoTipo('conta')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Variável / Eventual</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
                                         <button onclick="setLancamentoTipo('fixa')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Conta Fixa Salva</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
                                         <button onclick="setLancamentoTipo('cartao')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Cartão de Crédito</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
+                                        <button onclick="setLancamentoTipo('gasto_diario')" class="w-full py-4 rounded-2xl bg-[#FFC107] border border-[#FFC107]/30 text-black font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Gasto Diário</span> <i class="fa-solid fa-coins text-[8px] opacity-60"></i></button>
                                     </div>
                                     <button onclick="closeModal()" class="mt-8 text-white/40 font-black uppercase text-[8px] tracking-[0.3em]">Cancelar</button>
                                 </div>
@@ -1286,17 +1291,17 @@
                                 <form onsubmit="handleSalvarConta(event)" class="space-y-6">
                                     <div class="flex items-center justify-between border-b border-white/10 pb-4">
                                         <button type="button" onclick="backLancamento()" class="text-[#CCFF00]"><i class="fa-solid fa-arrow-left"></i></button>
-                                        <span class="text-white font-black uppercase text-[10px] tracking-widest">${state.tipoLancamento.toUpperCase()}</span>
+                                        <span class="text-white font-black uppercase text-[10px] tracking-widest">${state.tipoLancamento === 'gasto_diario' ? 'GASTO DIÁRIO' : state.tipoLancamento.toUpperCase()}</span>
                                         <div class="w-4"></div>
                                     </div>
                                     <div class="space-y-4">
                                         <div class="flex items-center gap-3">
                                             <button type="button" onclick="triggerFile('main')" class="w-16 h-16 rounded-2xl bg-black border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                                ${(state.tempImagem || state.editando?.imagem) ? `<img src="${state.tempImagem || state.editando?.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid fa-camera text-white/10"></i>`}
+                                                ${(state.tempImagem || state.editando?.imagem) ? `<img src="${state.tempImagem || state.editando?.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${state.tipoLancamento === 'gasto_diario' ? 'fa-coins' : 'fa-camera'} text-white/10"></i>`}
                                             </button>
                                             <input id="file-main" type="file" accept="image/*" class="hidden" onchange="processFile(event, 'tempImagem')">
                                             <div class="flex-1">
-                                                ${state.tipoLancamento === 'conta' ? `<input name="nome" type="text" placeholder="Nome do lançamento" value="${state.editando?.nome || ''}" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required />` : `<select name="itemId" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required onchange="updateItemSelection(this.value)"><option value="">Selecione...</option>${(state.tipoLancamento === 'cartao' ? state.dados.cartoes : state.dados.fixas).map(item => `<option value="${item.id}" ${state.itemSelecionadoId === item.id ? 'selected' : ''}>${state.tipoLancamento === 'cartao' ? item.banco : item.nome}</option>`).join('')}</select>`}
+                                                ${state.tipoLancamento === 'conta' || state.tipoLancamento === 'gasto_diario' ? `<input name="nome" type="text" placeholder="${state.tipoLancamento === 'gasto_diario' ? 'Descrição (ex: Pão, Café, Lanche)' : 'Nome do lançamento'}" value="${state.editando?.nome || ''}" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required />` : `<select name="itemId" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required onchange="updateItemSelection(this.value)"><option value="">Selecione...</option>${(state.tipoLancamento === 'cartao' ? state.dados.cartoes : state.dados.fixas).map(item => `<option value="${item.id}" ${state.itemSelecionadoId === item.id ? 'selected' : ''}>${state.tipoLancamento === 'cartao' ? item.banco : item.nome}</option>`).join('')}</select>`}
                                             </div>
                                         </div>
                                         <div class="grid grid-cols-12 gap-2">
@@ -1318,16 +1323,30 @@
                                             </div>
                                         </div>
                                         
-                                        <div class="grid grid-cols-3 gap-2 max-h-[120px] overflow-y-auto no-scrollbar">
-                                            ${CATEGORIAS.map(cat => `
-                                                <button type="button" onclick="setCat('${cat.id}')" class="flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all ${state.catSelecionada === cat.id ? 'bg-[#CCFF00] border-[#CCFF00] text-black' : 'bg-black/40 border-white/5 text-white/40'}">
-                                                    <i class="fa-solid ${cat.icone} text-[10px]"></i>
-                                                    <span class="text-[7px] font-black uppercase text-center">${cat.nome}</span>
-                                                </button>
-                                            `).join('')}
-                                        </div>
+                                        ${state.tipoLancamento === 'gasto_diario' ? `
+                                            <div class="bg-[#FFC107]/10 p-4 rounded-2xl border border-[#FFC107]/20">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-8 h-8 rounded-xl bg-[#FFC107] flex items-center justify-center">
+                                                        <i class="fa-solid fa-coins text-black text-xs"></i>
+                                                    </div>
+                                                    <div>
+                                                        <span class="text-[10px] font-black uppercase text-white">Categoria: Gasto Diário</span>
+                                                        <p class="text-[8px] text-white/40">Automaticamente marcado como PAGO</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ` : `
+                                            <div class="grid grid-cols-3 gap-2 max-h-[120px] overflow-y-auto no-scrollbar">
+                                                ${CATEGORIAS.map(cat => `
+                                                    <button type="button" onclick="setCat('${cat.id}')" class="flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all ${state.catSelecionada === cat.id ? 'bg-[#CCFF00] border-[#CCFF00] text-black' : 'bg-black/40 border-white/5 text-white/40'}">
+                                                        <i class="fa-solid ${cat.icone} text-[10px]"></i>
+                                                        <span class="text-[7px] font-black uppercase text-center">${cat.nome}</span>
+                                                    </button>
+                                                `).join('')}
+                                            </div>
+                                        `}
                                     </div>
-                                    <button type="submit" class="w-full py-4 rounded-2xl bg-[#CCFF00] text-black font-black uppercase tracking-[0.2em] text-[11px] shadow-lg active:scale-95 transition-all">Salvar Registro</button>
+                                    <button type="submit" class="w-full py-4 rounded-2xl ${state.tipoLancamento === 'gasto_diario' ? 'bg-[#FFC107] text-black' : 'bg-[#CCFF00] text-black'} font-black uppercase tracking-[0.2em] text-[11px] shadow-lg active:scale-95 transition-all">Salvar Registro</button>
                                 </form>
                             `}
                         </div>
@@ -1620,7 +1639,14 @@
         window.setFiltroOrdem = (o) => { state.filtroOrdem = o; render(); }; 
         window.closeModal = () => { state.modal = null; state.editando = null; state.tempImagem = null; state.passoLancamento = 'selecao'; state.itemSelecionadoId = ''; state.faturaFiltroIni = ''; state.faturaFiltroFim = ''; render(); };
         window.openModalLancamento = () => { state.modal = 'lancamento'; state.passoLancamento = 'selecao'; render(); };
-        window.setLancamentoTipo = (tipo) => { state.tipoLancamento = tipo; state.passoLancamento = 'formulario'; render(); };
+        window.setLancamentoTipo = (tipo) => { 
+            state.tipoLancamento = tipo; 
+            state.passoLancamento = 'formulario'; 
+            if (tipo === 'gasto_diario') {
+                state.catSelecionada = 'gasto_diario';
+            }
+            render(); 
+        };
         window.backLancamento = () => { if (state.editando) closeModal(); else { state.passoLancamento = 'selecao'; render(); } };
         
         window.updateItemSelection = (id) => { 
@@ -1654,9 +1680,14 @@
             const repetir = Math.min(parseInt(f.get('repetir')) || 1, 24);
             const valor = parseFloat(f.get('valor'));
             const dataInput = f.get('data'); // Formato YYYY-MM-DD
-            let nomeBase = ""; let imagem = state.tempImagem || state.editando?.imagem; let categoria = state.catSelecionada;
+            let nomeBase = ""; let imagem = state.tempImagem || state.editando?.imagem; 
+            let categoria = state.tipoLancamento === 'gasto_diario' ? 'gasto_diario' : state.catSelecionada;
+            let pago = state.tipoLancamento === 'gasto_diario'; // Gasto Diário entra como PAGO
+            let historicoPagamentos = state.tipoLancamento === 'gasto_diario' ? [{ id: Date.now().toString(), valor: valor, data: new Date().toISOString() }] : [];
             
             if (state.tipoLancamento === 'conta') {
+                nomeBase = f.get('nome');
+            } else if (state.tipoLancamento === 'gasto_diario') {
                 nomeBase = f.get('nome');
             } else if (state.tipoLancamento === 'cartao') {
                 const obj = state.dados.cartoes.find(c => c.id === state.itemSelecionadoId);
@@ -1682,8 +1713,8 @@
                     nome: repetir > 1 ? `${nomeBase} (${i+1}/${repetir})` : nomeBase,
                     valor, 
                     data: dataFormatada,
-                    pago: false, 
-                    historicoPagamentos: [], 
+                    pago: pago, // Gasto Diário já entra como PAGO
+                    historicoPagamentos: historicoPagamentos, // Gasto Diário já tem histórico de pagamento
                     categoria, 
                     imagem, 
                     tipo: state.tipoLancamento,
