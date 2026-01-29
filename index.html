@@ -613,7 +613,7 @@
                                 <div class="w-8 h-8 rounded-full bg-[#CCFF00] overflow-hidden flex items-center justify-center">
                                     ${state.currentUser?.thumbnail ? `<img src="${state.currentUser.thumbnail}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-user text-black text-[10px]"></i>`}
                                 </div>
-                                <span class="text-[10px] font-black uppercase tracking-widest text-white/80">${state.currentUser?.nome}</span>
+                                <span class="text-[10px] font-black uppercase text-white/80">${state.currentUser?.nome}</span>
                             </div>
                         </div>
                         
@@ -647,7 +647,12 @@
             const contasNoPeriodo = todasAsContas.filter(c => c.data >= state.relFiltroDataInicio && c.data <= state.relFiltroDataFim);
             const totalGeral = contasNoPeriodo.reduce((a, b) => a + b.valor, 0);
 
-            const catMap = contasNoPeriodo.reduce((acc, c) => {
+            // Calcular gastos diários separadamente
+            const gastosDiarios = contasNoPeriodo.filter(c => c.categoria === 'gasto_diario');
+            const totalGastosDiarios = gastosDiarios.reduce((a, b) => a + b.valor, 0);
+            const percentualGastosDiarios = totalGeral > 0 ? ((totalGastosDiarios / totalGeral) * 100).toFixed(1) : 0;
+
+            const catMap = contasNoPeriodo.filter(c => c.categoria !== 'gasto_diario').reduce((acc, c) => {
                 const catId = c.categoria || 'outros';
                 if (!acc[catId]) acc[catId] = [];
                 acc[catId].push(c);
@@ -712,11 +717,25 @@
                 insights.push(`Suas contas fixas consomem <b>${((totalFixas / totalGeral) * 100).toFixed(0)}%</b> do orçamento.`);
                 const gastoCompras = resumoCategorias.find(c => c.id === 'compras')?.total || 0;
                 insights.push(gastoCompras > 0 ? `Você gastou R$ ${gastoCompras.toLocaleString('pt-br')} em <b>Compras</b> manuais.` : `Nenhum gasto registrado em <b>Compras</b> no período.`);
+                if (totalGastosDiarios > 0) {
+                    insights.push(`Gastos diários somaram R$ ${totalGastosDiarios.toLocaleString('pt-br')} (${percentualGastosDiarios}% do total).`);
+                }
             } else {
                 insights.push("Selecione um período com dados para gerar insights.");
             }
 
-            return { totalGeral, resumoCategorias, insights, totalCartoes, resumoCartoes };
+            return { 
+                totalGeral, 
+                resumoCategorias, 
+                insights, 
+                totalCartoes, 
+                resumoCartoes,
+                gastosDiarios: {
+                    total: totalGastosDiarios,
+                    percentual: percentualGastosDiarios,
+                    count: gastosDiarios.length
+                }
+            };
         }
 
         function renderRelatorioCompleto() {
@@ -766,6 +785,26 @@
                                     <div class="h-full" style="width: ${c.percentual}%; background: ${c.cor}"></div>
                                 </div>
                             `).join('')}
+                            
+                            <!-- GASTOS DIÁRIOS ADICIONADOS AO CARD PRETO -->
+                            ${dataRel.gastosDiarios.count > 0 ? `
+                                <div class="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-2 h-2 rounded-full" style="background: #CCFF00"></div>
+                                        <div>
+                                            <span class="text-[12px] font-black uppercase text-[#cccccc]">Gastos Diários</span>
+                                            <span class="text-[9px] font-black text-[#CCFF00] block">${dataRel.gastosDiarios.count} lançamentos</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-[13px] font-black">R$ ${dataRel.gastosDiarios.total.toLocaleString('pt-br')}</span>
+                                        <span class="text-[10px] font-bold text-[#CCFF00] ml-2">${dataRel.gastosDiarios.percentual}%</span>
+                                    </div>
+                                </div>
+                                <div class="w-full h-[3px] bg-white/5 rounded-full overflow-hidden">
+                                    <div class="h-full" style="width: ${dataRel.gastosDiarios.percentual}%; background: #CCFF00"></div>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
 
@@ -1283,7 +1322,8 @@
                                         <button onclick="setLancamentoTipo('conta')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Variável / Eventual</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
                                         <button onclick="setLancamentoTipo('fixa')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Conta Fixa Salva</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
                                         <button onclick="setLancamentoTipo('cartao')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Cartão de Crédito</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
-                                        <button onclick="setLancamentoTipo('gasto_diario')" class="w-full py-4 rounded-2xl bg-[#FFC107] border border-[#FFC107]/30 text-black font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Gasto Diário</span> <i class="fa-solid fa-coins text-[8px] opacity-60"></i></button>
+                                        <!-- ALTERAÇÃO 1: COR DO BOTÃO GASTO DIÁRIO PARA VERDE-LIMÃO (#CCFF00) -->
+                                        <button onclick="setLancamentoTipo('gasto_diario')" class="w-full py-4 rounded-2xl bg-[#CCFF00] border border-[#CCFF00]/30 text-black font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Gasto Diário</span> <i class="fa-solid fa-coins text-[8px] opacity-60"></i></button>
                                     </div>
                                     <button onclick="closeModal()" class="mt-8 text-white/40 font-black uppercase text-[8px] tracking-[0.3em]">Cancelar</button>
                                 </div>
@@ -1324,9 +1364,10 @@
                                         </div>
                                         
                                         ${state.tipoLancamento === 'gasto_diario' ? `
-                                            <div class="bg-[#FFC107]/10 p-4 rounded-2xl border border-[#FFC107]/20">
+                                            <!-- ALTERAÇÃO 1: COR DO DESTAQUE GASTO DIÁRIO PARA VERDE-LIMÃO (#CCFF00) -->
+                                            <div class="bg-[#CCFF00]/10 p-4 rounded-2xl border border-[#CCFF00]/20">
                                                 <div class="flex items-center gap-3">
-                                                    <div class="w-8 h-8 rounded-xl bg-[#FFC107] flex items-center justify-center">
+                                                    <div class="w-8 h-8 rounded-xl bg-[#CCFF00] flex items-center justify-center">
                                                         <i class="fa-solid fa-coins text-black text-xs"></i>
                                                     </div>
                                                     <div>
@@ -1346,7 +1387,8 @@
                                             </div>
                                         `}
                                     </div>
-                                    <button type="submit" class="w-full py-4 rounded-2xl ${state.tipoLancamento === 'gasto_diario' ? 'bg-[#FFC107] text-black' : 'bg-[#CCFF00] text-black'} font-black uppercase tracking-[0.2em] text-[11px] shadow-lg active:scale-95 transition-all">Salvar Registro</button>
+                                    <!-- ALTERAÇÃO 1: COR DO BOTÃO DE SALVAR GASTO DIÁRIO PARA VERDE-LIMÃO (#CCFF00) -->
+                                    <button type="submit" class="w-full py-4 rounded-2xl ${state.tipoLancamento === 'gasto_diario' ? 'bg-[#CCFF00] text-black' : 'bg-[#CCFF00] text-black'} font-black uppercase tracking-[0.2em] text-[11px] shadow-lg active:scale-95 transition-all">Salvar Registro</button>
                                 </form>
                             `}
                         </div>
