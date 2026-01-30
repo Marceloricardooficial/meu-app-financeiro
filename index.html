@@ -280,6 +280,24 @@
         .verificar-button:active {
             transform: scale(0.95);
         }
+
+        /* Estilos para despesas diárias */
+        .despesa-diaria-badge {
+            background: #FF9800;
+            color: white;
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Filtro de despesas diárias */
+        .filter-despesa-diaria {
+            background: #FF9800 !important;
+            color: white !important;
+        }
     </style>
 </head>
 <body class="pb-44">
@@ -324,8 +342,8 @@
             { id: 'compras', nome: 'Compras', icone: 'fa-cart-shopping', cor: '#FF9800' },
             { id: 'lazer', nome: 'Lazer', icone: 'fa-gamepad', cor: '#4CAF50' },
             { id: 'saude', nome: 'Saúde', icone: 'fa-heart-pulse', cor: '#F44336' },
-            { id: 'gasto_diario', nome: 'Gasto Diário', icone: 'fa-coins', cor: '#FFC107' },
             { id: 'outros', nome: 'Outros', icone: 'fa-ellipsis', cor: '#607D8B' },
+            { id: 'despesa_diaria', nome: 'Despesas Diárias', icone: 'fa-calendar-day', cor: '#4CAF50' } /* ALTERADO: Cor alterada de #FF9800 (laranja) para #4CAF50 (verde) */
         ];
 
         const CORES_ESTILO = [
@@ -354,6 +372,7 @@
             abaAtiva: 'home',
             filtroStatus: 'todos',
             filtroOrdem: 'data',
+            filtroDespesaDiaria: false,
             verSaldo: true,
             semanasAtivas: [],
             dataNavegacao: new Date(),
@@ -466,7 +485,7 @@
         // --- FUNÇÕES DE NOTIFICAÇÕES ---
         function getContasVencidas() {
             const hoje = new Date().toISOString().split('T')[0];
-            return (state.dados.contas || []).filter(c => !c.pago && c.data < hoje);
+            return (state.dados.contas || []).filter(c => !c.pago && c.data < hoje && c.tipo !== 'despesa_diaria');
         }
 
         // Função para obter notificações de esquecimento (antiga "Lembrete" agora "Verificar")
@@ -577,12 +596,15 @@
 
         function getSemana2026(dataStr) {
             let d = new Date(dataStr + 'T12:00:00');
+            
+            // Ajustar finais de semana para a próxima segunda-feira
             const dayOfWeek = d.getDay(); 
             if (dayOfWeek === 6) {
                 d.setDate(d.getDate() + 2); 
             } else if (dayOfWeek === 0) {
                 d.setDate(d.getDate() + 1); 
             }
+            
             const mes = d.getMonth();
             const starts = GABARITO_2026[mes] || [1, 8, 15, 22];
             let semanaEncontrada = 1;
@@ -643,16 +665,26 @@
         };
 
         function getFilteredRelatorioData() {
-            const todasAsContas = state.dados.contas || [];
+            // Contas regulares (excluindo despesas diárias)
+            const todasAsContas = (state.dados.contas || []).filter(c => c.tipo !== 'despesa_diaria');
             const contasNoPeriodo = todasAsContas.filter(c => c.data >= state.relFiltroDataInicio && c.data <= state.relFiltroDataFim);
-            const totalGeral = contasNoPeriodo.reduce((a, b) => a + b.valor, 0);
+            
+            // Despesas diárias no período (apenas pagas)
+            const despesasDiarias = (state.dados.contas || []).filter(c => 
+                c.tipo === 'despesa_diaria' && 
+                c.pago === true &&  // Verificar se está paga
+                c.data >= state.relFiltroDataInicio && 
+                c.data <= state.relFiltroDataFim
+            );
+            
+            // TOTAL GERAL: Soma das contas regulares + despesas diárias pagas
+            const totalContasRegulares = contasNoPeriodo.reduce((a, b) => a + b.valor, 0);
+            const totalDespesasDiarias = despesasDiarias.reduce((a, b) => a + b.valor, 0);
+            const totalGeral = totalContasRegulares + totalDespesasDiarias;
+            
+            const percentualDespesasDiarias = totalGeral > 0 ? ((totalDespesasDiarias / totalGeral) * 100).toFixed(1) : 0;
 
-            // Calcular gastos diários separadamente
-            const gastosDiarios = contasNoPeriodo.filter(c => c.categoria === 'gasto_diario');
-            const totalGastosDiarios = gastosDiarios.reduce((a, b) => a + b.valor, 0);
-            const percentualGastosDiarios = totalGeral > 0 ? ((totalGastosDiarios / totalGeral) * 100).toFixed(1) : 0;
-
-            const catMap = contasNoPeriodo.filter(c => c.categoria !== 'gasto_diario').reduce((acc, c) => {
+            const catMap = contasNoPeriodo.reduce((acc, c) => {
                 const catId = c.categoria || 'outros';
                 if (!acc[catId]) acc[catId] = [];
                 acc[catId].push(c);
@@ -717,9 +749,6 @@
                 insights.push(`Suas contas fixas consomem <b>${((totalFixas / totalGeral) * 100).toFixed(0)}%</b> do orçamento.`);
                 const gastoCompras = resumoCategorias.find(c => c.id === 'compras')?.total || 0;
                 insights.push(gastoCompras > 0 ? `Você gastou R$ ${gastoCompras.toLocaleString('pt-br')} em <b>Compras</b> manuais.` : `Nenhum gasto registrado em <b>Compras</b> no período.`);
-                if (totalGastosDiarios > 0) {
-                    insights.push(`Gastos diários somaram R$ ${totalGastosDiarios.toLocaleString('pt-br')} (${percentualGastosDiarios}% do total).`);
-                }
             } else {
                 insights.push("Selecione um período com dados para gerar insights.");
             }
@@ -730,11 +759,9 @@
                 insights, 
                 totalCartoes, 
                 resumoCartoes,
-                gastosDiarios: {
-                    total: totalGastosDiarios,
-                    percentual: percentualGastosDiarios,
-                    count: gastosDiarios.length
-                }
+                totalDespesasDiarias,
+                percentualDespesasDiarias,
+                despesasDiarias
             };
         }
 
@@ -769,7 +796,7 @@
                         <span class="text-[9px] font-black uppercase text-[#CCFF00] tracking-widest italic block mb-2">Total no Período</span>
                         <h3 class="text-5xl font-black">R$ ${dataRel.totalGeral.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</h3>
                         
-                        <div class="space-y-4">
+                        <div class="space-y-4 mt-6">
                             ${dataRel.resumoCategorias.slice(0, 4).map(c => `
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-3">
@@ -786,25 +813,20 @@
                                 </div>
                             `).join('')}
                             
-                            <!-- GASTOS DIÁRIOS ADICIONADOS AO CARD PRETO -->
-                            ${dataRel.gastosDiarios.count > 0 ? `
-                                <div class="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-2 h-2 rounded-full" style="background: #CCFF00"></div>
-                                        <div>
-                                            <span class="text-[12px] font-black uppercase text-[#cccccc]">Gastos Diários</span>
-                                            <span class="text-[9px] font-black text-[#CCFF00] block">${dataRel.gastosDiarios.count} lançamentos</span>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="text-[13px] font-black">R$ ${dataRel.gastosDiarios.total.toLocaleString('pt-br')}</span>
-                                        <span class="text-[10px] font-bold text-[#CCFF00] ml-2">${dataRel.gastosDiarios.percentual}%</span>
-                                    </div>
+                            <!-- BLOCO DAS DESPESAS DIÁRIAS -->
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full" style="background: #4CAF50"></div> <!-- ALTERADO: Cor alterada de #FF9800 para #4CAF50 -->
+                                    <span class="text-[12px] font-black uppercase text-[#cccccc]">Despesas Diárias</span>
                                 </div>
-                                <div class="w-full h-[3px] bg-white/5 rounded-full overflow-hidden">
-                                    <div class="h-full" style="width: ${dataRel.gastosDiarios.percentual}%; background: #CCFF00"></div>
+                                <div class="text-right">
+                                    <span class="text-[13px] font-black">R$ ${dataRel.totalDespesasDiarias.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                    <span class="text-[10px] font-bold text-[#CCFF00] ml-2">${dataRel.percentualDespesasDiarias}%</span>
                                 </div>
-                            ` : ''}
+                            </div>
+                            <div class="w-full h-[3px] bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full" style="width: ${Math.min(dataRel.percentualDespesasDiarias, 100)}%; background: #4CAF50"></div> <!-- ALTERADO: Cor alterada de #FF9800 para #4CAF50 -->
+                            </div>
                         </div>
                     </div>
 
@@ -887,6 +909,46 @@
                                     </div>
                                 </div>
                             `}).join('')}
+                            
+                            <!-- CARD DAS DESPESAS DIÁRIAS NO RELATÓRIO COMPLETO -->
+                            ${dataRel.totalDespesasDiarias > 0 ? `
+                                <div class="bg-white rounded-[32px] overflow-hidden border border-gray-100 shadow-sm transition-all">
+                                    <div class="p-2 flex justify-between items-center">
+                                        <div class="p-4 flex justify-between items-center w-full">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white" style="background: #4CAF50"><i class="fa-solid fa-calendar-day"></i></div> <!-- ALTERADO: Cor alterada de #FF9800 para #4CAF50 -->
+                                                <div>
+                                                    <h5 class="text-xs font-black uppercase text-black">Despesas Diárias</h5>
+                                                    <p class="text-[9px] font-bold text-gray-400 uppercase">${dataRel.despesasDiarias.length} lançamentos</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <div class="text-right">
+                                                    <span class="text-sm font-black text-black block">R$ ${dataRel.totalDespesasDiarias.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                                    <span class="text-[8px] font-black text-[#11C76F] uppercase">Fatia: ${dataRel.percentualDespesasDiarias}%</span>
+                                                </div>
+                                                <button onclick="toggleRelatorioExpand('despesa_diaria')" class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-black active:scale-90 transition-all">
+                                                    <i class="fa-solid ${state.expandedCategory === 'despesa_diaria' ? 'fa-minus' : 'fa-plus'} text-[10px]"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="cat-expand-content ${state.expandedCategory === 'despesa_diaria' ? 'open' : ''} bg-gray-50/50">
+                                        <div class="px-6 pb-6 pt-2 space-y-3">
+                                            <div class="h-px bg-gray-100 w-full mb-4"></div>
+                                            ${dataRel.despesasDiarias.map(item => `
+                                                <div class="flex justify-between items-center">
+                                                    <div class="flex flex-col">
+                                                        <span class="text-[10px] font-bold text-black uppercase truncate max-w-[140px]">${item.nome}</span>
+                                                        <span class="text-[8px] font-black text-gray-400 uppercase">${new Date(item.data + 'T12:00:00').toLocaleDateString('pt-br')}</span>
+                                                    </div>
+                                                    <span class="text-[10px] font-black text-black">R$ ${item.valor.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
@@ -952,12 +1014,17 @@
                                 </button>
                                 `).join('')}
                             </div>
-                            <div class="flex bg-white/50 backdrop-blur-md border border-gray-200 p-1 rounded-2xl gap-1 w-fit">
-                                <button onclick="setFiltroOrdem('data')" class="w-9 h-9 rounded-xl flex items-center justify-center transition-all ${state.filtroOrdem === 'data' ? 'bg-black text-[#CCFF00] shadow-lg scale-105' : 'text-gray-400'}">
-                                    <i class="fa-solid fa-calendar-days text-[11px]"></i>
-                                </button>
-                                <button onclick="setFiltroOrdem('valor')" class="w-9 h-9 rounded-xl flex items-center justify-center transition-all ${state.filtroOrdem === 'valor' ? 'bg-black text-[#CCFF00] shadow-lg scale-105' : 'text-gray-400'}">
-                                    <i class="fa-solid fa-arrow-down-9-1 text-[11px]"></i>
+                            <div class="flex items-center gap-2">
+                                <div class="flex bg-white/50 backdrop-blur-md border border-gray-200 p-1 rounded-2xl gap-1 w-fit">
+                                    <button onclick="setFiltroOrdem('data')" class="w-9 h-9 rounded-xl flex items-center justify-center transition-all ${state.filtroOrdem === 'data' ? 'bg-black text-[#CCFF00] shadow-lg scale-105' : 'text-gray-400'}">
+                                        <i class="fa-solid fa-calendar-days text-[11px]"></i>
+                                    </button>
+                                    <button onclick="setFiltroOrdem('valor')" class="w-9 h-9 rounded-xl flex items-center justify-center transition-all ${state.filtroOrdem === 'valor' ? 'bg-black text-[#CCFF00] shadow-lg scale-105' : 'text-gray-400'}">
+                                        <i class="fa-solid fa-arrow-down-9-1 text-[11px]"></i>
+                                    </button>
+                                </div>
+                                <button onclick="toggleFiltroDespesaDiaria()" class="w-9 h-9 rounded-xl flex items-center justify-center transition-all ${state.filtroDespesaDiaria ? 'filter-despesa-diaria shadow-lg scale-105' : 'bg-white/50 text-gray-400 border border-gray-200'}">
+                                    <i class="fa-solid fa-sun text-[11px]"></i>
                                 </button>
                             </div>
                         </div>
@@ -1074,34 +1141,56 @@
             }
         }
 
-        window.openModalUsuario = () => { state.modal = 'usuario'; state.editando = null; state.tempImagem = null; render(); };
-        window.editUsuario = (id) => { 
-            state.editando = state.dados.usuarios.find(u => u.id === id); 
-            state.modal = 'usuario'; 
+        window.setAba = (aba) => { state.abaAtiva = aba; state.modal = null; render(); };
+        window.changeMonth = (val) => { state.dataNavegacao.setMonth(state.dataNavegacao.getMonth() + val); render(); };
+        window.toggleSaldo = () => { state.verSaldo = !state.verSaldo; render(); };
+        window.setSemana = (n) => { 
+            if (n === 'all') state.semanasAtivas = [];
+            else {
+                const idx = state.semanasAtivas.indexOf(n);
+                if (idx > -1) state.semanasAtivas.splice(idx, 1);
+                else state.semanasAtivas.push(n);
+            }
             render(); 
         };
-        window.confirmDeleteUsuario = (id) => {
-            if (state.dados.usuarios.length <= 1) {
-                alert("Não é possível remover o único usuário do sistema.");
-                return;
+        window.setFiltroStatus = (f) => { state.filtroStatus = f; render(); };
+        window.setFiltroOrdem = (o) => { state.filtroOrdem = o; render(); };
+        window.toggleFiltroDespesaDiaria = () => { 
+            state.filtroDespesaDiaria = !state.filtroDespesaDiaria; 
+            render(); 
+        };
+        window.closeModal = () => { state.modal = null; state.editando = null; state.tempImagem = null; state.passoLancamento = 'selecao'; state.itemSelecionadoId = ''; state.faturaFiltroIni = ''; state.faturaFiltroFim = ''; render(); };
+        window.openModalLancamento = () => { state.modal = 'lancamento'; state.passoLancamento = 'selecao'; render(); };
+        window.setLancamentoTipo = (tipo) => { 
+            state.tipoLancamento = tipo; 
+            state.passoLancamento = 'formulario'; 
+            // Definir categoria padrão para despesa diária
+            if (tipo === 'despesa_diaria') {
+                state.catSelecionada = 'despesa_diaria';
             }
-            if (confirm("Deseja realmente remover este usuário?")) {
-                state.dados.usuarios = state.dados.usuarios.filter(u => u.id !== id);
-                // Se o usuário removido for o usuário atual, fazer logout
-                if (state.currentUser && state.currentUser.id === id) {
-                    state.isLogged = false;
-                    state.currentUser = null;
-                    localStorage.removeItem('financeiro_remembered_user');
-                }
-                render();
-                salvarFirebase();
+            render(); 
+        };
+        window.backLancamento = () => { if (state.editando) closeModal(); else { state.passoLancamento = 'selecao'; render(); } };
+        
+        window.updateItemSelection = (id) => { 
+            state.itemSelecionadoId = id; 
+            if (state.tipoLancamento === 'fixa') {
+                const f = state.dados.fixas.find(x => x.id === id);
+                if (f && f.imagem) state.tempImagem = f.imagem;
+                if (f && f.categoria) state.catSelecionada = f.categoria;
+            } else if (state.tipoLancamento === 'cartao') {
+                const c = state.dados.cartoes.find(x => x.id === id);
+                if (c && c.imagem) state.tempImagem = c.imagem; 
+                state.catSelecionada = 'cartao_credito';
             }
+            render(); 
         };
 
         function renderItemConta(c, idx) {
             const categoria = CATEGORIAS.find(cat => cat.id === c.categoria) || CATEGORIAS.find(cat => cat.id === 'outros');
             const totalPago = (c.historicoPagamentos || []).reduce((a, b) => a + b.valor, 0);
             const faltaPagar = c.pago ? totalPago : (c.valor - totalPago);
+            const isDespesaDiaria = c.tipo === 'despesa_diaria';
             
             return `
                 <div class="relative p-5 flex items-center justify-between hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? 'bg-[#CCFF00]/5' : 'bg-white'}">
@@ -1110,7 +1199,10 @@
                             ${c.imagem ? `<img src="${c.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${categoria.icone} text-black/20 text-xs"></i>`}
                         </div>
                         <div class="truncate">
-                            <h4 class="text-xs font-bold truncate text-gray-800">${c.nome}</h4>
+                            <div class="flex items-center gap-2">
+                                <h4 class="text-xs font-bold truncate text-gray-800">${c.nome}</h4>
+                                ${isDespesaDiaria ? `<span class="despesa-diaria-badge">Diária</span>` : ''}
+                            </div>
                             <div class="flex items-center gap-2">
                                 <p class="text-[11px] font-black">R$ ${faltaPagar.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</p>
                                 <span class="text-[8px] font-black text-black/20 uppercase">${new Date(c.data + 'T12:00:00').toLocaleDateString('pt-br', { day: '2-digit', month: '2-digit' })}</span>
@@ -1281,40 +1373,10 @@
             }
 
             if (state.modal === 'lancamento') {
-                // Função auxiliar para obter a data sugerida formatada
-                const getDataSugerida = () => {
-                    if (state.editando) {
-                        return state.editando.data;
-                    }
-                    
-                    // Data atual como padrão
-                    const hoje = new Date();
-                    const ano = hoje.getFullYear();
-                    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-                    
-                    if (state.tipoLancamento === 'cartao' && state.itemSelecionadoId) {
-                        const cartao = state.dados.cartoes.find(x => x.id === state.itemSelecionadoId);
-                        const dia = String(cartao?.diaFatura || hoje.getDate()).padStart(2, '0');
-                        return `${ano}-${mes}-${dia}`;
-                    } else if (state.tipoLancamento === 'fixa' && state.itemSelecionadoId) {
-                        const fixa = state.dados.fixas.find(x => x.id === state.itemSelecionadoId);
-                        const dia = String(fixa?.diaVencimento || hoje.getDate()).padStart(2, '0');
-                        return `${ano}-${mes}-${dia}`;
-                    } else if (state.tipoLancamento === 'gasto_diario') {
-                        const dia = String(hoje.getDate()).padStart(2, '0');
-                        return `${ano}-${mes}-${dia}`;
-                    } else {
-                        const dia = String(hoje.getDate()).padStart(2, '0');
-                        return `${ano}-${mes}-${dia}`;
-                    }
-                };
-
-                const dataSugerida = getDataSugerida();
-
-                return `
-                    <div class="fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
-                        <div class="w-full max-w-sm bg-[#1A1A1A] rounded-[32px] border border-[#CCFF00]/30 p-6 animate-in">
-                            ${state.passoLancamento === 'selecao' ? `
+                if (state.passoLancamento === 'selecao') {
+                    return `
+                        <div class="fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
+                            <div class="w-full max-w-sm bg-[#1A1A1A] rounded-[32px] border border-[#CCFF00]/30 p-6 animate-in">
                                 <div class="text-center py-4">
                                     <div class="w-14 h-14 bg-[#CCFF00] rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(204,255,0,0.3)]"><i class="fa-solid fa-plus text-black text-xl"></i></div>
                                     <h2 class="text-[#CCFF00] font-black uppercase text-xs tracking-widest mb-8 italic">Novo Lançamento</h2>
@@ -1322,26 +1384,113 @@
                                         <button onclick="setLancamentoTipo('conta')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Variável / Eventual</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
                                         <button onclick="setLancamentoTipo('fixa')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Conta Fixa Salva</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
                                         <button onclick="setLancamentoTipo('cartao')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Cartão de Crédito</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
-                                        <!-- ALTERAÇÃO 1: COR DO BOTÃO GASTO DIÁRIO PARA VERDE-LIMÃO (#CCFF00) -->
-                                        <button onclick="setLancamentoTipo('gasto_diario')" class="w-full py-4 rounded-2xl bg-[#CCFF00] border border-[#CCFF00]/30 text-black font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Gasto Diário</span> <i class="fa-solid fa-coins text-[8px] opacity-60"></i></button>
+                                        <!-- ALTERAÇÃO VISUAL: Botão "Despesas Diárias" alterado de laranja (#FF9800) para verde (#4CAF50) -->
+                                        <button onclick="setLancamentoTipo('despesa_diaria')" class="w-full py-4 rounded-2xl bg-[#4CAF50] border border-[#4CAF50] text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Despesa Diária</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
                                     </div>
                                     <button onclick="closeModal()" class="mt-8 text-white/40 font-black uppercase text-[8px] tracking-[0.3em]">Cancelar</button>
                                 </div>
-                            ` : `
+                            </div>
+                        </div>
+                    `;
+                } else if (state.passoLancamento === 'formulario') {
+                    // Função auxiliar para obter a data sugerida formatada
+                    const getDataSugerida = () => {
+                        if (state.editando) {
+                            return state.editando.data;
+                        }
+                        
+                        // Data atual como padrão
+                        const hoje = new Date();
+                        const ano = hoje.getFullYear();
+                        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+                        
+                        if (state.tipoLancamento === 'cartao' && state.itemSelecionadoId) {
+                            const cartao = state.dados.cartoes.find(x => x.id === state.itemSelecionadoId);
+                            const dia = String(cartao?.diaFatura || hoje.getDate()).padStart(2, '0');
+                            return `${ano}-${mes}-${dia}`;
+                        } else if (state.tipoLancamento === 'fixa' && state.itemSelecionadoId) {
+                            const fixa = state.dados.fixas.find(x => x.id === state.itemSelecionadoId);
+                            const dia = String(fixa?.diaVencimento || hoje.getDate()).padStart(2, '0');
+                            return `${ano}-${mes}-${dia}`;
+                        } else {
+                            const dia = String(hoje.getDate()).padStart(2, '0');
+                            return `${ano}-${mes}-${dia}`;
+                        }
+                    };
+
+                    const dataSugerida = getDataSugerida();
+                    
+                    // Formulário para Despesa Diária (simplificado)
+                    if (state.tipoLancamento === 'despesa_diaria') {
+                        return `
+                            <div class="fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
+                                <div class="w-full max-w-sm bg-[#1A1A1A] rounded-[32px] border border-[#4CAF50]/30 p-6 animate-in"> <!-- ALTERADO: Borda alterada de #FF9800 para #4CAF50 -->
+                                    <form onsubmit="handleSalvarDespesaDiaria(event)" class="space-y-6">
+                                        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                                            <button type="button" onclick="backLancamento()" class="text-[#4CAF50]"><i class="fa-solid fa-arrow-left"></i></button> <!-- ALTERADO: Cor alterada de #FF9800 para #4CAF50 -->
+                                            <span class="text-white font-black uppercase text-[10px] tracking-widest">DESPESA DIÁRIA</span>
+                                            <div class="w-4"></div>
+                                        </div>
+                                        <div class="space-y-4">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-16 h-16 rounded-2xl bg-black border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                    <i class="fa-solid fa-calendar-day text-[#4CAF50] text-lg"></i> <!-- ALTERADO: Cor do ícone alterada de #FF9800 para #4CAF50 -->
+                                                </div>
+                                                <div class="flex-1">
+                                                    <input name="nome" type="text" placeholder="Nome da despesa" value="${state.editando?.nome || ''}" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required />
+                                                </div>
+                                            </div>
+                                            <div class="grid grid-cols-12 gap-2">
+                                                <div class="col-span-6 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                    <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Valor</span>
+                                                    <div class="flex items-center gap-1">
+                                                        <span class="text-[10px] text-[#4CAF50] font-bold">R$</span> <!-- ALTERADO: Cor do texto alterada de #FF9800 para #4CAF50 -->
+                                                        <input name="valor" type="number" step="0.01" placeholder="0,00" value="${state.editando?.valor || ''}" class="bg-transparent text-[#4CAF50] w-full font-black text-lg outline-none" required /> <!-- ALTERADO: Cor do texto alterada de #FF9800 para #4CAF50 -->
+                                                    </div>
+                                                </div>
+                                                <div class="col-span-6 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                    <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Data</span>
+                                                    <input name="data" type="date" value="${dataSugerida}" class="dark-date-input" required />
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Categoria (BLOQUEADA)</span>
+                                                <div class="flex items-center gap-2">
+                                                    <div class="w-6 h-6 rounded-full bg-[#4CAF50] flex items-center justify-center"> <!-- ALTERADO: Cor de fundo alterada de #FF9800 para #4CAF50 -->
+                                                        <i class="fa-solid fa-calendar-day text-[10px] text-white"></i>
+                                                    </div>
+                                                    <span class="text-[#4CAF50] font-bold text-[10px] uppercase">Despesa Diária</span> <!-- ALTERADO: Cor do texto alterada de #FF9800 para #4CAF50 -->
+                                                    <input type="hidden" name="categoria" value="despesa_diaria" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- ALTERAÇÃO VISUAL: Botão de submit alterado de #FF9800 (laranja) para #4CAF50 (verde) -->
+                                        <button type="submit" class="w-full py-4 rounded-2xl bg-[#4CAF50] text-black font-black uppercase tracking-[0.2em] text-[11px] shadow-lg active:scale-95 transition-all">Salvar Despesa Diária</button>
+                                    </form>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    // Formulário original para outros tipos
+                    return `
+                        <div class="fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
+                            <div class="w-full max-w-sm bg-[#1A1A1A] rounded-[32px] border border-[#CCFF00]/30 p-6 animate-in">
                                 <form onsubmit="handleSalvarConta(event)" class="space-y-6">
                                     <div class="flex items-center justify-between border-b border-white/10 pb-4">
                                         <button type="button" onclick="backLancamento()" class="text-[#CCFF00]"><i class="fa-solid fa-arrow-left"></i></button>
-                                        <span class="text-white font-black uppercase text-[10px] tracking-widest">${state.tipoLancamento === 'gasto_diario' ? 'GASTO DIÁRIO' : state.tipoLancamento.toUpperCase()}</span>
+                                        <span class="text-white font-black uppercase text-[10px] tracking-widest">${state.tipoLancamento.toUpperCase()}</span>
                                         <div class="w-4"></div>
                                     </div>
                                     <div class="space-y-4">
                                         <div class="flex items-center gap-3">
                                             <button type="button" onclick="triggerFile('main')" class="w-16 h-16 rounded-2xl bg-black border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                                ${(state.tempImagem || state.editando?.imagem) ? `<img src="${state.tempImagem || state.editando?.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${state.tipoLancamento === 'gasto_diario' ? 'fa-coins' : 'fa-camera'} text-white/10"></i>`}
+                                                ${(state.tempImagem || state.editando?.imagem) ? `<img src="${state.tempImagem || state.editando?.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid fa-camera text-white/10"></i>`}
                                             </button>
                                             <input id="file-main" type="file" accept="image/*" class="hidden" onchange="processFile(event, 'tempImagem')">
                                             <div class="flex-1">
-                                                ${state.tipoLancamento === 'conta' || state.tipoLancamento === 'gasto_diario' ? `<input name="nome" type="text" placeholder="${state.tipoLancamento === 'gasto_diario' ? 'Descrição (ex: Pão, Café, Lanche)' : 'Nome do lançamento'}" value="${state.editando?.nome || ''}" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required />` : `<select name="itemId" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required onchange="updateItemSelection(this.value)"><option value="">Selecione...</option>${(state.tipoLancamento === 'cartao' ? state.dados.cartoes : state.dados.fixas).map(item => `<option value="${item.id}" ${state.itemSelecionadoId === item.id ? 'selected' : ''}>${state.tipoLancamento === 'cartao' ? item.banco : item.nome}</option>`).join('')}</select>`}
+                                                ${state.tipoLancamento === 'conta' ? `<input name="nome" type="text" placeholder="Nome do lançamento" value="${state.editando?.nome || ''}" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required />` : `<select name="itemId" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required onchange="updateItemSelection(this.value)"><option value="">Selecione...</option>${(state.tipoLancamento === 'cartao' ? state.dados.cartoes : state.dados.fixas).map(item => `<option value="${item.id}" ${state.itemSelecionadoId === item.id ? 'selected' : ''}>${state.tipoLancamento === 'cartao' ? item.banco : item.nome}</option>`).join('')}</select>`}
                                             </div>
                                         </div>
                                         <div class="grid grid-cols-12 gap-2">
@@ -1363,37 +1512,21 @@
                                             </div>
                                         </div>
                                         
-                                        ${state.tipoLancamento === 'gasto_diario' ? `
-                                            <!-- ALTERAÇÃO 1: COR DO DESTAQUE GASTO DIÁRIO PARA VERDE-LIMÃO (#CCFF00) -->
-                                            <div class="bg-[#CCFF00]/10 p-4 rounded-2xl border border-[#CCFF00]/20">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="w-8 h-8 rounded-xl bg-[#CCFF00] flex items-center justify-center">
-                                                        <i class="fa-solid fa-coins text-black text-xs"></i>
-                                                    </div>
-                                                    <div>
-                                                        <span class="text-[10px] font-black uppercase text-white">Categoria: Gasto Diário</span>
-                                                        <p class="text-[8px] text-white/40">Automaticamente marcado como PAGO</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ` : `
-                                            <div class="grid grid-cols-3 gap-2 max-h-[120px] overflow-y-auto no-scrollbar">
-                                                ${CATEGORIAS.map(cat => `
-                                                    <button type="button" onclick="setCat('${cat.id}')" class="flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all ${state.catSelecionada === cat.id ? 'bg-[#CCFF00] border-[#CCFF00] text-black' : 'bg-black/40 border-white/5 text-white/40'}">
-                                                        <i class="fa-solid ${cat.icone} text-[10px]"></i>
-                                                        <span class="text-[7px] font-black uppercase text-center">${cat.nome}</span>
-                                                    </button>
-                                                `).join('')}
-                                            </div>
-                                        `}
+                                        <div class="grid grid-cols-3 gap-2 max-h-[120px] overflow-y-auto no-scrollbar">
+                                            ${CATEGORIAS.filter(cat => cat.id !== 'despesa_diaria').map(cat => `
+                                                <button type="button" onclick="setCat('${cat.id}')" class="flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all ${state.catSelecionada === cat.id ? 'bg-[#CCFF00] border-[#CCFF00] text-black' : 'bg-black/40 border-white/5 text-white/40'}">
+                                                    <i class="fa-solid ${cat.icone} text-[10px]"></i>
+                                                    <span class="text-[7px] font-black uppercase text-center">${cat.nome}</span>
+                                                </button>
+                                            `).join('')}
+                                        </div>
                                     </div>
-                                    <!-- ALTERAÇÃO 1: COR DO BOTÃO DE SALVAR GASTO DIÁRIO PARA VERDE-LIMÃO (#CCFF00) -->
-                                    <button type="submit" class="w-full py-4 rounded-2xl ${state.tipoLancamento === 'gasto_diario' ? 'bg-[#CCFF00] text-black' : 'bg-[#CCFF00] text-black'} font-black uppercase tracking-[0.2em] text-[11px] shadow-lg active:scale-95 transition-all">Salvar Registro</button>
+                                    <button type="submit" class="w-full py-4 rounded-2xl bg-[#CCFF00] text-black font-black uppercase tracking-[0.2em] text-[11px] shadow-lg active:scale-95 transition-all">Salvar Registro</button>
                                 </form>
-                            `}
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
             }
 
             if (state.modal === 'cartao' || state.modal === 'fixa') {
@@ -1421,7 +1554,7 @@
                                     <div class="bg-black p-4 rounded-2xl border border-white/5">
                                         <span class="text-[8px] text-white/40 font-black uppercase block mb-1">Setor / Categoria</span>
                                         <select name="categoria" class="bg-transparent text-[#CCFF00] font-black text-[10px] outline-none w-full uppercase">
-                                            ${CATEGORIAS.map(cat => `<option value="${cat.id}" class="bg-black" ${(editando.categoria === cat.id || (!state.editando && !isFixa && cat.id === 'cartao_credito')) ? 'selected' : ''}>${cat.nome}</option>`).join('')}
+                                            ${CATEGORIAS.filter(cat => cat.id !== 'despesa_diaria').map(cat => `<option value="${cat.id}" class="bg-black" ${(editando.categoria === cat.id || (!state.editando && !isFixa && cat.id === 'cartao_credito')) ? 'selected' : ''}>${cat.nome}</option>`).join('')}
                                         </select>
                                     </div>
                                 </div>
@@ -1623,9 +1756,21 @@
                 const d = new Date(c.data + 'T12:00:00');
                 return d.getMonth() === state.dataNavegacao.getMonth() && d.getFullYear() === state.dataNavegacao.getFullYear();
             });
-            if (state.semanasAtivas.length) {
-                filtrada = filtrada.filter(c => state.semanasAtivas.includes(getSemana2026(c.data)));
+            
+            // Aplicar filtro de despesas diárias
+            if (state.filtroDespesaDiaria) {
+                filtrada = filtrada.filter(c => c.tipo === 'despesa_diaria');
+            } else {
+                // Não mostrar despesas diárias no filtro padrão (conforme especificação)
+                filtrada = filtrada.filter(c => c.tipo !== 'despesa_diaria');
             }
+            
+            if (state.semanasAtivas.length) {
+                filtrada = filtrada.filter(c => {
+                    return state.semanasAtivas.includes(getSemana2026(c.data));
+                });
+            }
+            
             const proc = filtrada.map(c => {
                 const pago = (c.historicoPagamentos || []).reduce((a, b) => a + b.valor, 0);
                 return { ...c, totalPago: pago, faltaPagar: Math.max(0, c.valor - pago) };
@@ -1665,46 +1810,6 @@
             return { agrupado: Object.values(agrupado).sort((a, b) => b.mes.localeCompare(a.mes)), totalGeral, qtdItens: filtradas.length };
         }
 
-        window.setAba = (aba) => { state.abaAtiva = aba; state.modal = null; render(); };
-        window.changeMonth = (val) => { state.dataNavegacao.setMonth(state.dataNavegacao.getMonth() + val); render(); };
-        window.toggleSaldo = () => { state.verSaldo = !state.verSaldo; render(); };
-        window.setSemana = (n) => { 
-            if (n === 'all') state.semanasAtivas = [];
-            else {
-                const idx = state.semanasAtivas.indexOf(n);
-                if (idx > -1) state.semanasAtivas.splice(idx, 1);
-                else state.semanasAtivas.push(n);
-            }
-            render(); 
-        };
-        window.setFiltroStatus = (f) => { state.filtroStatus = f; render(); };
-        window.setFiltroOrdem = (o) => { state.filtroOrdem = o; render(); }; 
-        window.closeModal = () => { state.modal = null; state.editando = null; state.tempImagem = null; state.passoLancamento = 'selecao'; state.itemSelecionadoId = ''; state.faturaFiltroIni = ''; state.faturaFiltroFim = ''; render(); };
-        window.openModalLancamento = () => { state.modal = 'lancamento'; state.passoLancamento = 'selecao'; render(); };
-        window.setLancamentoTipo = (tipo) => { 
-            state.tipoLancamento = tipo; 
-            state.passoLancamento = 'formulario'; 
-            if (tipo === 'gasto_diario') {
-                state.catSelecionada = 'gasto_diario';
-            }
-            render(); 
-        };
-        window.backLancamento = () => { if (state.editando) closeModal(); else { state.passoLancamento = 'selecao'; render(); } };
-        
-        window.updateItemSelection = (id) => { 
-            state.itemSelecionadoId = id; 
-            if (state.tipoLancamento === 'fixa') {
-                const f = state.dados.fixas.find(x => x.id === id);
-                if (f && f.imagem) state.tempImagem = f.imagem;
-                if (f && f.categoria) state.catSelecionada = f.categoria;
-            } else if (state.tipoLancamento === 'cartao') {
-                const c = state.dados.cartoes.find(x => x.id === id);
-                if (c && c.imagem) state.tempImagem = c.imagem; 
-                state.catSelecionada = 'cartao_credito';
-            }
-            render(); 
-        };
-
         window.setCat = (id) => { state.catSelecionada = id; render(); };
         window.toggleExpandFatura = (id) => { const el = document.getElementById(`fatura-detalhe-${id}`); if(el) el.classList.toggle('hidden'); }
         window.openFaturas = (id) => { state.editando = state.dados.cartoes.find(x => x.id === id); state.modal = 'faturas'; render(); };
@@ -1723,13 +1828,11 @@
             const valor = parseFloat(f.get('valor'));
             const dataInput = f.get('data'); // Formato YYYY-MM-DD
             let nomeBase = ""; let imagem = state.tempImagem || state.editando?.imagem; 
-            let categoria = state.tipoLancamento === 'gasto_diario' ? 'gasto_diario' : state.catSelecionada;
-            let pago = state.tipoLancamento === 'gasto_diario'; // Gasto Diário entra como PAGO
-            let historicoPagamentos = state.tipoLancamento === 'gasto_diario' ? [{ id: Date.now().toString(), valor: valor, data: new Date().toISOString() }] : [];
+            let categoria = state.catSelecionada;
+            let pago = state.editando?.pago || false;
+            let historicoPagamentos = state.editando?.historicoPagamentos || [];
             
             if (state.tipoLancamento === 'conta') {
-                nomeBase = f.get('nome');
-            } else if (state.tipoLancamento === 'gasto_diario') {
                 nomeBase = f.get('nome');
             } else if (state.tipoLancamento === 'cartao') {
                 const obj = state.dados.cartoes.find(c => c.id === state.itemSelecionadoId);
@@ -1755,8 +1858,8 @@
                     nome: repetir > 1 ? `${nomeBase} (${i+1}/${repetir})` : nomeBase,
                     valor, 
                     data: dataFormatada,
-                    pago: pago, // Gasto Diário já entra como PAGO
-                    historicoPagamentos: historicoPagamentos, // Gasto Diário já tem histórico de pagamento
+                    pago: pago,
+                    historicoPagamentos: historicoPagamentos,
                     categoria, 
                     imagem, 
                     tipo: state.tipoLancamento,
@@ -1768,6 +1871,45 @@
             state.dados.contas = novas;
             closeModal(); 
             await salvarFirebase();
+        };
+
+        window.handleSalvarDespesaDiaria = async (e) => {
+            e.preventDefault();
+            const f = new FormData(e.target);
+            const valor = parseFloat(f.get('valor'));
+            const dataInput = f.get('data');
+            const nomeBase = f.get('nome');
+            
+            let novas = [...state.dados.contas];
+            if (state.editando) novas = novas.filter(x => x.id !== state.editando.id);
+            
+            const novaDespesa = {
+                id: state.editando?.id || Date.now().toString(),
+                nome: nomeBase,
+                valor, 
+                data: dataInput,
+                pago: true, // Despesa diária sempre considerada paga
+                historicoPagamentos: [{ id: Date.now().toString(), valor, data: new Date().toISOString() }],
+                categoria: 'despesa_diaria', // Categoria bloqueada
+                imagem: null, // Sem thumbnail
+                tipo: 'despesa_diaria', // Tipo específico
+                cartaoId: null,
+                fixaId: null
+            };
+            
+            novas.push(novaDespesa);
+            state.dados.contas = novas;
+            
+            // Feedback de sucesso
+            state.feedback = { ativo: true, frase: "Despesa diária registrada com sucesso!" };
+            render();
+            await salvarFirebase();
+            
+            setTimeout(() => { 
+                state.feedback.ativo = false; 
+                closeModal();
+                render();
+            }, 1500);
         };
 
         window.openModalPagar = (id) => { state.editando = state.dados.contas.find(x => x.id === id); state.modal = 'pagar'; render(); };
@@ -1879,8 +2021,19 @@
 
         window.editConta = (id) => {
             const c = state.dados.contas.find(x => x.id === id);
-            state.editando = c; state.tipoLancamento = c.tipo || 'conta'; state.catSelecionada = c.categoria || 'outros';
-            state.itemSelecionadoId = c.cartaoId || c.fixaId || ''; state.passoLancamento = 'formulario'; state.modal = 'lancamento';
+            state.editando = c; 
+            state.tipoLancamento = c.tipo || 'conta'; 
+            state.catSelecionada = c.categoria || 'outros';
+            state.itemSelecionadoId = c.cartaoId || c.fixaId || ''; 
+            state.passoLancamento = 'formulario'; 
+            state.modal = 'lancamento';
+            
+            // Se for despesa diária, usar formulário específico
+            if (c.tipo === 'despesa_diaria') {
+                state.tipoLancamento = 'despesa_diaria';
+                state.catSelecionada = 'despesa_diaria';
+            }
+            
             render();
         };
         window.editContaFromModal = (id) => { state.modal = null; setTimeout(() => editConta(id), 100); };
