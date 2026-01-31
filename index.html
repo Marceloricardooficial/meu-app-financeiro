@@ -283,7 +283,7 @@
 
         /* Estilos para despesas diárias */
         .despesa-diaria-badge {
-            background: #FF9800;
+            background: #4CAF50;
             color: white;
             font-size: 8px;
             padding: 2px 6px;
@@ -295,8 +295,204 @@
         
         /* Filtro de despesas diárias */
         .filter-despesa-diaria {
-            background: #FF9800 !important;
+            background: #4CAF50 !important;
             color: white !important;
+        }
+        
+        /* NOVOS ESTILOS PARA MÓDULO GASTOS */
+        .subcategoria-item {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .subcategoria-item:hover {
+            border-color: #CCFF00;
+            transform: translateY(-2px);
+        }
+        .subcategoria-thumb {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            flex-shrink: 0;
+        }
+        .filtros-gastos {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+        .select-subcategoria {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px 16px;
+            width: 100%;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .btn-nova-subcategoria {
+            background: #CCFF00;
+            color: black;
+            border-radius: 16px;
+            padding: 16px 24px;
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-nova-subcategoria:active {
+            transform: scale(0.95);
+        }
+        .btn-filtrar-gastos {
+            background: black;
+            color: #CCFF00;
+            border-radius: 16px;
+            padding: 16px 24px;
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            width: 100%;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-filtrar-gastos:active {
+            transform: scale(0.95);
+        }
+        .modal-subcategoria {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-subcategoria-content {
+            background: white;
+            border-radius: 32px;
+            padding: 32px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .grid-icones {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+            margin-bottom: 24px;
+        }
+        .icone-option {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            border: 2px solid #e5e7eb;
+            color: #374151;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .icone-option:hover {
+            border-color: #CCFF00;
+            transform: scale(1.1);
+        }
+        .icone-option.selected {
+            background: #CCFF00;
+            border-color: #CCFF00;
+            color: black;
+        }
+        .empty-state {
+            padding: 64px 20px;
+            text-align: center;
+            color: #9ca3af;
+        }
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.2;
+        }
+        
+        /* Estilos para modal de lançamentos da subcategoria */
+        .modal-lancamentos-subcategoria {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-lancamentos-content {
+            background: white;
+            border-radius: 32px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .lancamento-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .lancamento-item:last-child {
+            border-bottom: none;
+        }
+        .btn-editar-subcategoria {
+            background: black;
+            color: #CCFF00;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-weight: 800;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-excluir-subcategoria {
+            background: #f44336;
+            color: white;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-weight: 800;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: none;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -343,7 +539,18 @@
             { id: 'lazer', nome: 'Lazer', icone: 'fa-gamepad', cor: '#4CAF50' },
             { id: 'saude', nome: 'Saúde', icone: 'fa-heart-pulse', cor: '#F44336' },
             { id: 'outros', nome: 'Outros', icone: 'fa-ellipsis', cor: '#607D8B' },
-            { id: 'despesa_diaria', nome: 'Despesas Diárias', icone: 'fa-calendar-day', cor: '#4CAF50' } /* ALTERADO: Cor alterada de #FF9800 (laranja) para #4CAF50 (verde) */
+            { id: 'despesa_diaria', nome: 'Despesas Diárias', icone: 'fa-calendar-day', cor: '#4CAF50' }
+        ];
+
+        // SUBCATEGORIAS PADRÃO PARA GASTOS
+        const SUBCATEGORIAS_PADRAO = [
+            { id: 'marmitas', nome: 'Marmitas', icone: 'fa-utensils', cor: '#FF9800' },
+            { id: 'lanches', nome: 'Lanches', icone: 'fa-burger', cor: '#FF5722' },
+            { id: 'shopping', nome: 'Shopping', icone: 'fa-bag-shopping', cor: '#9C27B0' },
+            { id: 'padaria', nome: 'Padaria', icone: 'fa-bread-slice', cor: '#795548' },
+            { id: 'cafezinho', nome: 'Cafezinho', icone: 'fa-mug-hot', cor: '#607D8B' },
+            { id: 'noite', nome: 'Noite', icone: 'fa-moon', cor: '#3F51B5' },
+            { id: 'roupas', nome: 'Roupas', icone: 'fa-tshirt', cor: '#E91E63' }
         ];
 
         const CORES_ESTILO = [
@@ -357,6 +564,17 @@
             { id: 'laranja', hex: '#FF7A00', nome: 'Inter' },
         ];
 
+        const ICONES_SUBCATEGORIAS = [
+            'fa-utensils', 'fa-burger', 'fa-bag-shopping', 'fa-bread-slice', 'fa-mug-hot',
+            'fa-moon', 'fa-tshirt', 'fa-car', 'fa-gas-pump', 'fa-film',
+            'fa-music', 'fa-book', 'fa-dumbbell', 'fa-heart', 'fa-plane',
+            'fa-train', 'fa-bus', 'fa-taxi', 'fa-bicycle', 'fa-walking',
+            'fa-wine-glass', 'fa-pizza-slice', 'fa-ice-cream', 'fa-coffee', 'fa-beer',
+            'fa-cocktail', 'fa-smoking', 'fa-gamepad', 'fa-futbol', 'fa-basketball',
+            'fa-baseball', 'fa-swimming-pool', 'fa-shopping-cart', 'fa-gift', 'fa-flag',
+            'fa-star', 'fa-gem', 'fa-crown', 'fa-medal', 'fa-trophy'
+        ];
+
         const FRASES_ALIVIO = ["Ufa, menos uma conta!", "Missão cumprida.", "O bolso agradece!", "Paz de espírito!", "Conta paga, alma lavada!"];
 
         // --- CAMADA DE USUÁRIOS (LOCAL) ---
@@ -368,7 +586,13 @@
             isLogged: false,
             currentUser: null,
             user: null,
-            dados: { contas: [], cartoes: [], fixas: [], usuarios: usuariosPadrao },
+            dados: { 
+                contas: [], 
+                cartoes: [], 
+                fixas: [], 
+                usuarios: usuariosPadrao,
+                subcategoriasGastos: SUBCATEGORIAS_PADRAO // NOVO: subcategorias de gastos
+            },
             abaAtiva: 'home',
             filtroStatus: 'todos',
             filtroOrdem: 'data',
@@ -393,7 +617,16 @@
             notificacaoAba: 'vencidas',
             verificarMes: new Date().getMonth(),
             verificarAno: new Date().getFullYear(),
-            notificacoesVerificar: []
+            notificacoesVerificar: [],
+            // NOVOS ESTADOS PARA MÓDULO GASTOS
+            gastosFiltroDataInicio: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+            gastosFiltroDataFim: new Date().toISOString().split('T')[0],
+            gastosFiltroSubcategoria: 'todas',
+            modalSubcategoria: false,
+            novaSubcategoria: { nome: '', icone: 'fa-utensils', cor: '#FF9800' },
+            editandoSubcategoria: null,
+            modalLancamentosSubcategoria: false,
+            subcategoriaSelecionada: null
         };
 
         // --- FUNÇÕES DE LOGIN COM LEMBRAR USUÁRIO ---
@@ -619,7 +852,7 @@
         }
 
         function renderHeader() {
-            if (state.abaAtiva !== 'home' && state.abaAtiva !== 'usuarios') return '';
+            if (state.abaAtiva !== 'home' && state.abaAtiva !== 'usuarios' && state.abaAtiva !== 'gastos') return '';
             const temNotificacao = temNotificacoes();
 
             return `
@@ -664,6 +897,303 @@
             render();
         };
 
+        // --- FUNÇÕES PARA MÓDULO GASTOS ---
+        window.setGastosFiltroDataInicio = (valor) => {
+            state.gastosFiltroDataInicio = valor;
+            render();
+        };
+
+        window.setGastosFiltroDataFim = (valor) => {
+            state.gastosFiltroDataFim = valor;
+            render();
+        };
+
+        window.setGastosFiltroSubcategoria = (valor) => {
+            state.gastosFiltroSubcategoria = valor;
+            render();
+        };
+
+        window.aplicarFiltrosGastos = () => {
+            // Os filtros já são aplicados na função getDespesasDiariasFiltradas
+            render();
+        };
+
+        window.openModalNovaSubcategoria = () => {
+            state.modalSubcategoria = true;
+            state.editandoSubcategoria = null;
+            state.novaSubcategoria = { nome: '', icone: 'fa-utensils', cor: '#FF9800' };
+            render();
+        };
+
+        window.closeModalSubcategoria = () => {
+            state.modalSubcategoria = false;
+            state.editandoSubcategoria = null;
+            state.novaSubcategoria = { nome: '', icone: 'fa-utensils', cor: '#FF9800' };
+            render();
+        };
+
+        window.setIconeSubcategoria = (icone) => {
+            state.novaSubcategoria.icone = icone;
+            render();
+        };
+
+        window.salvarNovaSubcategoria = async () => {
+            if (!state.novaSubcategoria.nome.trim()) {
+                alert("Digite um nome para a subcategoria");
+                return;
+            }
+
+            if (state.editandoSubcategoria) {
+                // Atualizar subcategoria existente
+                state.dados.subcategoriasGastos = state.dados.subcategoriasGastos.map(s => 
+                    s.id === state.editandoSubcategoria.id ? { 
+                        ...state.novaSubcategoria, 
+                        id: state.editandoSubcategoria.id 
+                    } : s
+                );
+            } else {
+                // Criar nova subcategoria
+                const novaSubcategoria = {
+                    id: Date.now().toString(),
+                    nome: state.novaSubcategoria.nome.trim(),
+                    icone: state.novaSubcategoria.icone,
+                    cor: state.novaSubcategoria.cor
+                };
+                state.dados.subcategoriasGastos = [...state.dados.subcategoriasGastos, novaSubcategoria];
+            }
+            
+            await salvarFirebase();
+            state.modalSubcategoria = false;
+            state.editandoSubcategoria = null;
+            state.novaSubcategoria = { nome: '', icone: 'fa-utensils', cor: '#FF9800' };
+            render();
+        };
+
+        window.editarSubcategoria = (id) => {
+            const subcategoria = state.dados.subcategoriasGastos.find(s => s.id === id);
+            if (!subcategoria) return;
+            
+            state.editandoSubcategoria = subcategoria;
+            state.novaSubcategoria = { ...subcategoria };
+            state.modalSubcategoria = true;
+            render();
+        };
+
+        window.excluirSubcategoria = async (id) => {
+            // Verificar se há lançamentos associados a esta subcategoria
+            const lancamentosAssociados = state.dados.contas.filter(c => 
+                c.tipo === 'despesa_diaria' && c.subcategoriaId === id
+            );
+            
+            if (lancamentosAssociados.length > 0) {
+                if (!confirm("Esta subcategoria possui lançamentos associados. Deseja excluir mesmo assim?")) {
+                    return;
+                }
+            }
+            
+            // Remover subcategoria
+            state.dados.subcategoriasGastos = state.dados.subcategoriasGastos.filter(s => s.id !== id);
+            
+            // Opcional: remover a subcategoriaId dos lançamentos associados
+            if (lancamentosAssociados.length > 0) {
+                state.dados.contas = state.dados.contas.map(c => {
+                    if (c.tipo === 'despesa_diaria' && c.subcategoriaId === id) {
+                        return { ...c, subcategoriaId: null };
+                    }
+                    return c;
+                });
+            }
+            
+            await salvarFirebase();
+            render();
+        };
+
+        window.openLancamentosSubcategoria = (subcategoriaId) => {
+            const subcategoria = state.dados.subcategoriasGastos.find(s => s.id === subcategoriaId);
+            if (!subcategoria) return;
+            
+            state.subcategoriaSelecionada = subcategoria;
+            state.modalLancamentosSubcategoria = true;
+            render();
+        };
+
+        window.closeModalLancamentosSubcategoria = () => {
+            state.modalLancamentosSubcategoria = false;
+            state.subcategoriaSelecionada = null;
+            render();
+        };
+
+        // Função para obter despesas diárias filtradas
+        function getDespesasDiariasFiltradas() {
+            let despesas = state.dados.contas.filter(c => c.tipo === 'despesa_diaria');
+            
+            // Aplicar filtro de datas
+            if (state.gastosFiltroDataInicio) {
+                despesas = despesas.filter(c => c.data >= state.gastosFiltroDataInicio);
+            }
+            if (state.gastosFiltroDataFim) {
+                despesas = despesas.filter(c => c.data <= state.gastosFiltroDataFim);
+            }
+            
+            // Aplicar filtro de subcategoria
+            if (state.gastosFiltroSubcategoria !== 'todas') {
+                despesas = despesas.filter(c => c.subcategoriaId === state.gastosFiltroSubcategoria);
+            }
+            
+            return despesas;
+        }
+
+        // Função para calcular totais por subcategoria
+        function getTotaisPorSubcategoria() {
+            const despesasFiltradas = getDespesasDiariasFiltradas();
+            const totais = {};
+            
+            // Inicializar todas as subcategorias com total 0
+            state.dados.subcategoriasGastos.forEach(sub => {
+                totais[sub.id] = {
+                    subcategoria: sub,
+                    total: 0,
+                    quantidade: 0
+                };
+            });
+            
+            // Somar valores
+            despesasFiltradas.forEach(despesa => {
+                if (despesa.subcategoriaId && totais[despesa.subcategoriaId]) {
+                    totais[despesa.subcategoriaId].total += despesa.valor;
+                    totais[despesa.subcategoriaId].quantidade++;
+                }
+            });
+            
+            // Converter para array e ordenar por total (decrescente)
+            return Object.values(totais)
+                .filter(item => item.total > 0 || state.gastosFiltroSubcategoria === 'todas')
+                .sort((a, b) => b.total - a.total);
+        }
+
+        function renderGastos() {
+            const totaisPorSubcategoria = getTotaisPorSubcategoria();
+            const totalGeral = totaisPorSubcategoria.reduce((sum, item) => sum + item.total, 0);
+            
+            return `
+                <div class="p-6 max-w-md mx-auto pt-12 animate-in pb-40">
+                    <div class="flex items-center gap-4 mb-6">
+                        <button onclick="setAba('home')" class="text-black text-2xl active:scale-90 transition-all mr-1">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <h2 class="text-4xl font-black text-black uppercase italic">Despesas Diárias</h2>
+                    </div>
+                    
+                    <!-- Filtros -->
+                    <div class="filtros-gastos">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="text-[8px] font-black uppercase text-gray-400 mb-1 block">Data Início</label>
+                                <input type="date" 
+                                       value="${state.gastosFiltroDataInicio}" 
+                                       onchange="setGastosFiltroDataInicio(this.value)"
+                                       class="input-light w-full" />
+                            </div>
+                            <div>
+                                <label class="text-[8px] font-black uppercase text-gray-400 mb-1 block">Data Fim</label>
+                                <input type="date" 
+                                       value="${state.gastosFiltroDataFim}" 
+                                       onchange="setGastosFiltroDataFim(this.value)"
+                                       class="input-light w-full" />
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="text-[8px] font-black uppercase text-gray-400 mb-1 block">Subcategoria</label>
+                            <select onchange="setGastosFiltroSubcategoria(this.value)" 
+                                    class="select-subcategoria">
+                                <option value="todas" ${state.gastosFiltroSubcategoria === 'todas' ? 'selected' : ''}>Todas as subcategorias</option>
+                                ${state.dados.subcategoriasGastos.map(sub => `
+                                    <option value="${sub.id}" ${state.gastosFiltroSubcategoria === sub.id ? 'selected' : ''}>${sub.nome}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        
+                        <button onclick="aplicarFiltrosGastos()" class="btn-filtrar-gastos">
+                            <i class="fa-solid fa-filter"></i> Aplicar Filtros
+                        </button>
+                    </div>
+                    
+                    <!-- Total Geral -->
+                    <div class="bg-black rounded-[32px] p-6 text-white mb-8 shadow-xl">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-[9px] font-black uppercase text-[#CCFF00] block mb-1">Total no Período</span>
+                                <p class="text-3xl font-black">R$ ${totalGeral.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[9px] font-black uppercase text-white/40 block mb-1">Subcategorias</span>
+                                <p class="text-xl font-black">${totaisPorSubcategoria.length}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Lista de Subcategorias -->
+                    <div class="mb-8">
+                        <h4 class="text-black font-black uppercase text-xs mb-6 flex items-center justify-between">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-layer-group text-gray-300"></i> Subcategorias</span>
+                            <span class="text-[10px] text-gray-400">${totaisPorSubcategoria.length} itens</span>
+                        </h4>
+                        
+                        ${totaisPorSubcategoria.length > 0 ? `
+                            <div class="space-y-4">
+                                ${totaisPorSubcategoria.map(item => `
+                                    <div class="subcategoria-item">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-4">
+                                                <div class="subcategoria-thumb" style="background: ${item.subcategoria.cor}">
+                                                    <i class="fa-solid ${item.subcategoria.icone}"></i>
+                                                </div>
+                                                <div>
+                                                    <h5 class="text-sm font-black text-black">${item.subcategoria.nome}</h5>
+                                                    <p class="text-[9px] font-black uppercase text-gray-400">${item.quantidade} lançamentos</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <button onclick="openLancamentosSubcategoria('${item.subcategoria.id}')" class="w-8 h-8 rounded-full bg-[#CCFF00] flex items-center justify-center text-black active:scale-90">
+                                                    <i class="fa-solid fa-plus text-[10px]"></i>
+                                                </button>
+                                                <button onclick="editarSubcategoria('${item.subcategoria.id}')" class="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white active:scale-90">
+                                                    <i class="fa-solid fa-pen text-[10px]"></i>
+                                                </button>
+                                                <button onclick="excluirSubcategoria('${item.subcategoria.id}')" class="w-8 h-8 rounded-full bg-[#f44336] flex items-center justify-center text-white active:scale-90">
+                                                    <i class="fa-solid fa-trash text-[10px]"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="text-right mt-2">
+                                            <span class="text-lg font-black text-black block">R$ ${item.total.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                            ${totalGeral > 0 ? `
+                                                <span class="text-[10px] font-black text-gray-400">
+                                                    ${((item.total / totalGeral) * 100).toFixed(1)}%
+                                                </span>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="empty-state">
+                                <i class="fa-solid fa-receipt"></i>
+                                <p class="text-[10px] font-black uppercase">Nenhuma despesa encontrada</p>
+                                <p class="text-[9px] text-gray-400 mt-2">Ajuste os filtros ou registre novas despesas</p>
+                            </div>
+                        `}
+                    </div>
+                    
+                    <!-- Botão Nova Subcategoria -->
+                    <button onclick="openModalNovaSubcategoria()" class="btn-nova-subcategoria w-full mb-20">
+                        <i class="fa-solid fa-plus"></i> Cadastrar nova subcategoria
+                    </button>
+                </div>
+            `;
+        }
+
         function getFilteredRelatorioData() {
             // Contas regulares (excluindo despesas diárias)
             const todasAsContas = (state.dados.contas || []).filter(c => c.tipo !== 'despesa_diaria');
@@ -672,7 +1202,7 @@
             // Despesas diárias no período (apenas pagas)
             const despesasDiarias = (state.dados.contas || []).filter(c => 
                 c.tipo === 'despesa_diaria' && 
-                c.pago === true &&  // Verificar se está paga
+                c.pago === true &&
                 c.data >= state.relFiltroDataInicio && 
                 c.data <= state.relFiltroDataFim
             );
@@ -816,7 +1346,7 @@
                             <!-- BLOCO DAS DESPESAS DIÁRIAS -->
                             <div class="flex items-center justify-between mt-2">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-2 h-2 rounded-full" style="background: #4CAF50"></div> <!-- ALTERADO: Cor alterada de #FF9800 para #4CAF50 -->
+                                    <div class="w-2 h-2 rounded-full" style="background: #4CAF50"></div>
                                     <span class="text-[12px] font-black uppercase text-[#cccccc]">Despesas Diárias</span>
                                 </div>
                                 <div class="text-right">
@@ -825,7 +1355,7 @@
                                 </div>
                             </div>
                             <div class="w-full h-[3px] bg-white/5 rounded-full overflow-hidden">
-                                <div class="h-full" style="width: ${Math.min(dataRel.percentualDespesasDiarias, 100)}%; background: #4CAF50"></div> <!-- ALTERADO: Cor alterada de #FF9800 para #4CAF50 -->
+                                <div class="h-full" style="width: ${Math.min(dataRel.percentualDespesasDiarias, 100)}%; background: #4CAF50"></div>
                             </div>
                         </div>
                     </div>
@@ -916,7 +1446,7 @@
                                     <div class="p-2 flex justify-between items-center">
                                         <div class="p-4 flex justify-between items-center w-full">
                                             <div class="flex items-center gap-4">
-                                                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white" style="background: #4CAF50"><i class="fa-solid fa-calendar-day"></i></div> <!-- ALTERADO: Cor alterada de #FF9800 para #4CAF50 -->
+                                                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white" style="background: #4CAF50"><i class="fa-solid fa-calendar-day"></i></div>
                                                 <div>
                                                     <h5 class="text-xs font-black uppercase text-black">Despesas Diárias</h5>
                                                     <p class="text-[9px] font-bold text-gray-400 uppercase">${dataRel.despesasDiarias.length} lançamentos</p>
@@ -1036,6 +1566,8 @@
             }
 
             if (state.abaAtiva === 'relatorios') return renderRelatorioCompleto();
+            
+            if (state.abaAtiva === 'gastos') return renderGastos();
 
             if (state.abaAtiva === 'cartoes') {
                 return `
@@ -1226,7 +1758,8 @@
                             { id: 'home', ic: 'house-chimney', label: 'Home' }, 
                             { id: 'cartoes', ic: 'credit-card', label: 'Cartões' }, 
                             { id: 'relatorios', ic: 'chart-pie', label: 'Relatórios' },
-                            { id: 'fixas', ic: 'house-lock', label: 'Fixas' }
+                            { id: 'fixas', ic: 'house-lock', label: 'Fixas' },
+                            { id: 'gastos', ic: 'money-bill', label: 'Gastos' } // NOVO: Item Gastos
                         ].map(b => `
                             <button onclick="setAba('${b.id}')" class="flex flex-col items-center gap-1 transition-all ${state.abaAtiva === b.id ? 'opacity-100 scale-110' : 'opacity-40'}">
                                 <i class="fa-solid fa-${b.ic} text-lg ${state.abaAtiva === b.id ? 'text-[#CCFF00]' : 'text-gray-400'}"></i>
@@ -1242,7 +1775,92 @@
         }
 
         function renderModais() {
-            if (!state.modal) return '';
+            if (!state.modal && !state.modalSubcategoria && !state.modalLancamentosSubcategoria) return '';
+
+            // Modal de Nova Subcategoria (MODAL SEPARADO)
+            if (state.modalSubcategoria) {
+                return `
+                    <div class="modal-subcategoria" onclick="if(event.target.classList.contains('modal-subcategoria')) closeModalSubcategoria()">
+                        <div class="modal-subcategoria-content animate-in">
+                            <div class="flex items-center justify-between mb-8">
+                                <h3 class="text-2xl font-black text-black">${state.editandoSubcategoria ? 'Editar' : 'Nova'} Subcategoria</h3>
+                                <button onclick="closeModalSubcategoria()" class="text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label class="text-[10px] font-black uppercase text-gray-400 mb-2 block">Nome da Subcategoria</label>
+                                <input type="text" 
+                                       id="nome-subcategoria"
+                                       value="${state.novaSubcategoria.nome}"
+                                       oninput="state.novaSubcategoria.nome = this.value; render()"
+                                       placeholder="Ex: Transporte, Alimentação..."
+                                       class="input-light w-full text-lg font-bold" />
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label class="text-[10px] font-black uppercase text-gray-400 mb-2 block">Selecione um Ícone</label>
+                                <div class="grid-icones">
+                                    ${ICONES_SUBCATEGORIAS.map(icone => `
+                                        <div onclick="setIconeSubcategoria('${icone}')" 
+                                             class="icone-option ${state.novaSubcategoria.icone === icone ? 'selected' : ''}">
+                                            <i class="fa-solid ${icone}"></i>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <button onclick="salvarNovaSubcategoria()" class="btn-nova-subcategoria w-full">
+                                <i class="fa-solid fa-check"></i> ${state.editandoSubcategoria ? 'Atualizar' : 'Salvar'} Subcategoria
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Modal de Lançamentos da Subcategoria
+            if (state.modalLancamentosSubcategoria) {
+                const subcategoria = state.subcategoriaSelecionada;
+                const lancamentos = state.dados.contas
+                    .filter(c => c.tipo === 'despesa_diaria' && c.subcategoriaId === subcategoria.id)
+                    .sort((a, b) => new Date(b.data) - new Date(a.data));
+                
+                return `
+                    <div class="modal-lancamentos-subcategoria" onclick="if(event.target.classList.contains('modal-lancamentos-subcategoria')) closeModalLancamentosSubcategoria()">
+                        <div class="modal-lancamentos-content animate-in">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xl font-black text-black">Lançamentos - ${subcategoria.nome}</h3>
+                                <button onclick="closeModalLancamentosSubcategoria()" class="text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <p class="text-gray-500 text-sm">Total de lançamentos: ${lancamentos.length}</p>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                ${lancamentos.length > 0 ? lancamentos.map(l => `
+                                    <div class="lancamento-item">
+                                        <div class="flex-1">
+                                            <h4 class="text-sm font-bold text-gray-800">${l.nome}</h4>
+                                            <p class="text-xs text-gray-500">${new Date(l.data + 'T12:00:00').toLocaleDateString('pt-br')}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-sm font-black text-gray-900">R$ ${l.valor.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</p>
+                                            <p class="text-xs text-gray-500">${l.pago ? 'Pago' : 'Pendente'}</p>
+                                        </div>
+                                    </div>
+                                `).join('') : `
+                                    <div class="empty-state">
+                                        <i class="fa-solid fa-receipt"></i>
+                                        <p class="text-[10px] font-black uppercase">Nenhum lançamento encontrado</p>
+                                    </div>
+                                `}
+                            </div>
+                            
+                            <button onclick="closeModalLancamentosSubcategoria()" class="w-full mt-6 py-3 bg-black text-white rounded-xl font-bold">Fechar</button>
+                        </div>
+                    </div>
+                `;
+            }
 
             if (state.modal === 'usuario') {
                 return `
@@ -1384,7 +2002,7 @@
                                         <button onclick="setLancamentoTipo('conta')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Variável / Eventual</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
                                         <button onclick="setLancamentoTipo('fixa')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Conta Fixa Salva</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
                                         <button onclick="setLancamentoTipo('cartao')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Cartão de Crédito</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
-                                        <!-- ALTERAÇÃO VISUAL: Botão "Despesas Diárias" alterado de laranja (#FF9800) para verde (#4CAF50) -->
+                                        <!-- Botão "Despesas Diárias" -->
                                         <button onclick="setLancamentoTipo('despesa_diaria')" class="w-full py-4 rounded-2xl bg-[#4CAF50] border border-[#4CAF50] text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Despesa Diária</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
                                     </div>
                                     <button onclick="closeModal()" class="mt-8 text-white/40 font-black uppercase text-[8px] tracking-[0.3em]">Cancelar</button>
@@ -1420,32 +2038,29 @@
 
                     const dataSugerida = getDataSugerida();
                     
-                    // Formulário para Despesa Diária (simplificado)
+                    // Formulário para Despesa Diária (COM SUBCATEGORIA)
                     if (state.tipoLancamento === 'despesa_diaria') {
                         return `
                             <div class="fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
-                                <div class="w-full max-w-sm bg-[#1A1A1A] rounded-[32px] border border-[#4CAF50]/30 p-6 animate-in"> <!-- ALTERADO: Borda alterada de #FF9800 para #4CAF50 -->
+                                <div class="w-full max-w-sm bg-[#1A1A1A] rounded-[32px] border border-[#4CAF50]/30 p-6 animate-in">
                                     <form onsubmit="handleSalvarDespesaDiaria(event)" class="space-y-6">
                                         <div class="flex items-center justify-between border-b border-white/10 pb-4">
-                                            <button type="button" onclick="backLancamento()" class="text-[#4CAF50]"><i class="fa-solid fa-arrow-left"></i></button> <!-- ALTERADO: Cor alterada de #FF9800 para #4CAF50 -->
+                                            <button type="button" onclick="backLancamento()" class="text-[#4CAF50]"><i class="fa-solid fa-arrow-left"></i></button>
                                             <span class="text-white font-black uppercase text-[10px] tracking-widest">DESPESA DIÁRIA</span>
                                             <div class="w-4"></div>
                                         </div>
                                         <div class="space-y-4">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-16 h-16 rounded-2xl bg-black border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                                    <i class="fa-solid fa-calendar-day text-[#4CAF50] text-lg"></i> <!-- ALTERADO: Cor do ícone alterada de #FF9800 para #4CAF50 -->
-                                                </div>
-                                                <div class="flex-1">
-                                                    <input name="nome" type="text" placeholder="Nome da despesa" value="${state.editando?.nome || ''}" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required />
-                                                </div>
+                                            <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Descrição</span>
+                                                <input name="descricao" type="text" placeholder="Descrição da despesa" value="${state.editando?.descricao || state.editando?.nome || ''}" class="w-full bg-transparent text-white font-black text-lg outline-none" required />
                                             </div>
+                                            
                                             <div class="grid grid-cols-12 gap-2">
                                                 <div class="col-span-6 bg-black/40 p-3 rounded-2xl border border-white/5">
                                                     <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Valor</span>
                                                     <div class="flex items-center gap-1">
-                                                        <span class="text-[10px] text-[#4CAF50] font-bold">R$</span> <!-- ALTERADO: Cor do texto alterada de #FF9800 para #4CAF50 -->
-                                                        <input name="valor" type="number" step="0.01" placeholder="0,00" value="${state.editando?.valor || ''}" class="bg-transparent text-[#4CAF50] w-full font-black text-lg outline-none" required /> <!-- ALTERADO: Cor do texto alterada de #FF9800 para #4CAF50 -->
+                                                        <span class="text-[10px] text-[#4CAF50] font-bold">R$</span>
+                                                        <input name="valor" type="number" step="0.01" placeholder="0,00" value="${state.editando?.valor || ''}" class="bg-transparent text-[#4CAF50] w-full font-black text-lg outline-none" required />
                                                     </div>
                                                 </div>
                                                 <div class="col-span-6 bg-black/40 p-3 rounded-2xl border border-white/5">
@@ -1455,17 +2070,26 @@
                                             </div>
                                             
                                             <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Subcategoria</span>
+                                                <select name="subcategoriaId" class="w-full bg-transparent text-white font-black text-[12px] outline-none" required>
+                                                    <option value="">Selecione uma subcategoria</option>
+                                                    ${state.dados.subcategoriasGastos.map(sub => `
+                                                        <option value="${sub.id}" ${state.editando?.subcategoriaId === sub.id ? 'selected' : ''}>${sub.nome}</option>
+                                                    `).join('')}
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
                                                 <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Categoria (BLOQUEADA)</span>
                                                 <div class="flex items-center gap-2">
-                                                    <div class="w-6 h-6 rounded-full bg-[#4CAF50] flex items-center justify-center"> <!-- ALTERADO: Cor de fundo alterada de #FF9800 para #4CAF50 -->
+                                                    <div class="w-6 h-6 rounded-full bg-[#4CAF50] flex items-center justify-center">
                                                         <i class="fa-solid fa-calendar-day text-[10px] text-white"></i>
                                                     </div>
-                                                    <span class="text-[#4CAF50] font-bold text-[10px] uppercase">Despesa Diária</span> <!-- ALTERADO: Cor do texto alterada de #FF9800 para #4CAF50 -->
+                                                    <span class="text-[#4CAF50] font-bold text-[10px] uppercase">Despesa Diária</span>
                                                     <input type="hidden" name="categoria" value="despesa_diaria" />
                                                 </div>
                                             </div>
                                         </div>
-                                        <!-- ALTERAÇÃO VISUAL: Botão de submit alterado de #FF9800 (laranja) para #4CAF50 (verde) -->
                                         <button type="submit" class="w-full py-4 rounded-2xl bg-[#4CAF50] text-black font-black uppercase tracking-[0.2em] text-[11px] shadow-lg active:scale-95 transition-all">Salvar Despesa Diária</button>
                                     </form>
                                 </div>
@@ -1878,19 +2502,27 @@
             const f = new FormData(e.target);
             const valor = parseFloat(f.get('valor'));
             const dataInput = f.get('data');
-            const nomeBase = f.get('nome');
+            const descricao = f.get('descricao');
+            const subcategoriaId = f.get('subcategoriaId');
+            
+            if (!subcategoriaId) {
+                alert("Selecione uma subcategoria!");
+                return;
+            }
             
             let novas = [...state.dados.contas];
             if (state.editando) novas = novas.filter(x => x.id !== state.editando.id);
             
             const novaDespesa = {
                 id: state.editando?.id || Date.now().toString(),
-                nome: nomeBase,
+                nome: descricao,
+                descricao: descricao,
                 valor, 
                 data: dataInput,
                 pago: true, // Despesa diária sempre considerada paga
                 historicoPagamentos: [{ id: Date.now().toString(), valor, data: new Date().toISOString() }],
                 categoria: 'despesa_diaria', // Categoria bloqueada
+                subcategoriaId: subcategoriaId, // NOVO: subcategoria
                 imagem: null, // Sem thumbnail
                 tipo: 'despesa_diaria', // Tipo específico
                 cartaoId: null,
@@ -2056,8 +2688,12 @@
         async function salvarFirebase() {
             if (!state.user) return;
             const ref = doc(db, 'apps', APP_ID, 'dados', 'financeiro');
-            try { await setDoc(ref, { ...state.dados, lastUpdate: Date.now() }, { merge: true }); } 
-            catch (e) { console.error("Erro ao salvar:", e); }
+            try { 
+                await setDoc(ref, { 
+                    ...state.dados, 
+                    lastUpdate: Date.now() 
+                }, { merge: true }); 
+            } catch (e) { console.error("Erro ao salvar:", e); }
         }
 
         const init = async () => {
@@ -2072,7 +2708,8 @@
                                 contas: Array.isArray(d?.contas) ? d.contas : [],
                                 cartoes: Array.isArray(d?.cartoes) ? d.cartoes.map(c => ({ ...c, lembrarSemLancamento: c.lembrarSemLancamento || false })) : [],
                                 fixas: Array.isArray(d?.fixas) ? d.fixas.map(f => ({ ...f, lembrarSemLancamento: f.lembrarSemLancamento || false })) : [],
-                                usuarios: Array.isArray(d?.usuarios) ? d.usuarios : usuariosPadrao
+                                usuarios: Array.isArray(d?.usuarios) ? d.usuarios : usuariosPadrao,
+                                subcategoriasGastos: Array.isArray(d?.subcategoriasGastos) ? d.subcategoriasGastos : SUBCATEGORIAS_PADRAO // NOVO: carregar subcategorias
                             };
                             
                             // Verificar se há usuário lembrado para login automático
