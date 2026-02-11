@@ -1,0 +1,2782 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Financeiro">
+    
+<!-- Manifest PWA -->
+<link rel="manifest" href="/meu-app-financeiro/manifest.json">
+
+<!-- Cor da barra / status bar -->
+<meta name="theme-color" content="#bdea57">
+
+<!-- Ícone fallback -->
+<link rel="icon" type="image/png" href="/meu-app-financeiro/assets/icons/icon-192.png">
+
+<!-- Apple -->
+<link rel="apple-touch-icon" href="/meu-app-financeiro/assets/icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bora Pagar">
+    <title>Financeiro 2026 | Gestão de Elite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #F4F4F4;
+            overscroll-behavior-y: contain;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes in { 
+            from { opacity: 0; transform: translateY(20px) scale(0.9); } 
+            to { opacity: 1; transform: translateY(0) scale(1); } 
+        }
+        .animate-in { animation: in 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+
+        .card-shadow { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        #root { min-height: 100vh; width: 100vw; }
+        
+        .input-light {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            color: #374151;
+            font-size: 12px;
+            padding: 10px 14px;
+            border-radius: 12px;
+        }
+
+        .insight-card {
+            background: rgba(204, 255, 0, 0.05);
+            border: 1px solid rgba(204, 255, 0, 0.2);
+            padding: 16px;
+            border-radius: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .cat-expand-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .cat-expand-content.open {
+            max-height: 1000px; 
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 10px;
+            height: 10px;
+            background-color: #CCFF00;
+            border-radius: 50%;
+            border: 2px solid #121212;
+        }
+
+        /* Estilos específicos para o Login */
+        .login-input {
+            background: #1A1A1A;
+            border: 1px solid rgba(204, 255, 0, 0.1);
+            color: white;
+            padding: 16px;
+            border-radius: 20px;
+            width: 100%;
+            outline: none;
+            font-weight: 600;
+        }
+        .login-input:focus {
+            border-color: #CCFF00;
+        }
+        
+        /* Estilo para input type="date" */
+        input[type="date"] {
+            color-scheme: dark;
+        }
+        .dark-date-input {
+            background: transparent;
+            color: white;
+            font-family: inherit;
+            font-size: 16px;
+            border: none;
+            outline: none;
+            width: 100%;
+        }
+        .light-date-input {
+            background: transparent;
+            color: #374151;
+            font-family: inherit;
+            font-size: 16px;
+            border: none;
+            outline: none;
+            width: 100%;
+        }
+
+        /* NOTIFICAÇÕES - ESTILOS ADICIONAIS */
+        .notification-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 4px;
+            margin-bottom: 16px;
+        }
+        .notification-tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .notification-tab.active {
+            background: #CCFF00;
+            color: #000;
+        }
+        .notification-tab:not(.active) {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .notification-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .notification-item-vencida {
+            border-left: 3px solid #FF4444;
+        }
+        .notification-item-esquecimento {
+            border-left: 3px solid #CCFF00;
+        }
+        .notification-thumb {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .notification-content {
+            flex: 1;
+        }
+        .notification-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2px;
+        }
+        .notification-subtitle {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 600;
+        }
+        
+        /* Switch customizado */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .3s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #CCFF00;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+            background-color: #000;
+        }
+
+        /* Estilos para a nova aba Verificar */
+        .verificar-header {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .verificar-month-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        .verificar-month-display {
+            font-size: 14px;
+            font-weight: 800;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            min-width: 140px;
+            text-align: center;
+        }
+        .verificar-button {
+            width: 100%;
+            padding: 12px;
+            background: #CCFF00;
+            color: black;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }
+        .verificar-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Estilos para despesas diárias */
+        .despesa-diaria-badge {
+            background: #4CAF50;
+            color: white;
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Filtro de despesas diárias */
+        .filter-despesa-diaria {
+            background: #4CAF50 !important;
+            color: white !important;
+        }
+        
+        /* NOVOS ESTILOS PARA MÓDULO GASTOS */
+        .subcategoria-item {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .subcategoria-item:hover {
+            border-color: #CCFF00;
+            transform: translateY(-2px);
+        }
+        .subcategoria-thumb {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            flex-shrink: 0;
+        }
+        .filtros-gastos {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+        .select-subcategoria {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px 16px;
+            width: 100%;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .btn-nova-subcategoria {
+            background: #CCFF00;
+            color: black;
+            border-radius: 16px;
+            padding: 16px 24px;
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-nova-subcategoria:active {
+            transform: scale(0.95);
+        }
+        .btn-filtrar-gastos {
+            background: black;
+            color: #CCFF00;
+            border-radius: 16px;
+            padding: 16px 24px;
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            width: 100%;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-filtrar-gastos:active {
+            transform: scale(0.95);
+        }
+        .modal-subcategoria {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-subcategoria-content {
+            background: white;
+            border-radius: 32px;
+            padding: 32px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .grid-icones {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+            margin-bottom: 24px;
+        }
+        .icone-option {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            border: 2px solid #e5e7eb;
+            color: #374151;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .icone-option:hover {
+            border-color: #CCFF00;
+            transform: scale(1.1);
+        }
+        .icone-option.selected {
+            background: #CCFF00;
+            border-color: #CCFF00;
+            color: black;
+        }
+        .empty-state {
+            padding: 64px 20px;
+            text-align: center;
+            color: #9ca3af;
+        }
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.2;
+        }
+        
+        /* Estilos para modal de lançamentos da subcategoria */
+        .modal-lancamentos-subcategoria {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-lancamentos-content {
+            background: white;
+            border-radius: 32px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .lancamento-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .lancamento-item:last-child {
+            border-bottom: none;
+        }
+        .btn-editar-subcategoria {
+            background: black;
+            color: #CCFF00;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-weight: 800;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-excluir-subcategoria {
+            background: #f44336;
+            color: white;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-weight: 800;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: none;
+            cursor: pointer;
+        }
+        
+        /* NOVO: Estilo para expansão de subcategoria */
+        .subcategoria-expand-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: #fafafa;
+            border-radius: 16px;
+            margin-top: 8px;
+        }
+        .subcategoria-expand-content.open {
+            max-height: 500px;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+        }
+        .subcategoria-lancamento-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 12px;
+        }
+        .subcategoria-lancamento-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body class="pb-44">
+
+    <div id="root">
+        <div class="h-screen bg-black flex items-center justify-center text-[#CCFF00]">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl"></i>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVTxDg9He6DQI6SFp6Zgyidp83H6dduho",
+            authDomain: "financeiro-casa-66baa.firebaseapp.com",
+            projectId: "financeiro-casa-66baa",
+            storageBucket: "financeiro-casa-66baa.firebasestorage.app",
+            messagingSenderId: "997176892152",
+            appId: "1:997176892152:web:5dcc06d2a94900f5b7390d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const APP_ID = "financeiro-casa-66baa";
+
+        const GABARITO_2026 = {
+            0: [1, 5, 12, 19, 26, 31], 1: [2, 9, 16, 23], 2: [2, 9, 16, 23, 30], 3: [1, 6, 13, 20, 27],
+            4: [4, 11, 18, 25, 30], 5: [1, 8, 15, 22, 29], 6: [1, 6, 13, 20, 27], 7: [3, 10, 17, 24, 31],
+            8: [1, 7, 14, 21, 28], 9: [1, 5, 12, 19, 26], 10: [2, 9, 16, 23, 30], 11: [1, 7, 14, 21, 28]
+        };
+
+        const CATEGORIAS = [
+            { id: 'cartao_credito', nome: 'Cartão de crédito', icone: 'fa-credit-card', cor: '#8A05BE' },
+            { id: 'salao', nome: 'Salão Mari', icone: 'fa-scissors', cor: '#E91E63' },
+            { id: 'carro', nome: 'Carro', icone: 'fa-car', cor: '#2196F3' },
+            { id: 'casa', nome: 'Casa', icone: 'fa-house-chimney', cor: '#795548' },
+            { id: 'estudo', nome: 'Estudo', icone: 'fa-graduation-cap', cor: '#9C27B0' },
+            { id: 'compras', nome: 'Compras', icone: 'fa-cart-shopping', cor: '#FF9800' },
+            { id: 'lazer', nome: 'Lazer', icone: 'fa-gamepad', cor: '#4CAF50' },
+            { id: 'saude', nome: 'Saúde', icone: 'fa-heart-pulse', cor: '#F44336' },
+            { id: 'outros', nome: 'Outros', icone: 'fa-ellipsis', cor: '#607D8B' },
+            { id: 'despesa_diaria', nome: 'Despesas Diárias', icone: 'fa-calendar-day', cor: '#4CAF50' }
+        ];
+
+        // SUBCATEGORIAS PADRÃO PARA GASTOS
+        const SUBCATEGORIAS_PADRAO = [
+            { id: 'marmitas', nome: 'Marmitas', icone: 'fa-utensils', cor: '#FF9800' },
+            { id: 'lanches', nome: 'Lanches', icone: 'fa-burger', cor: '#FF5722' },
+            { id: 'shopping', nome: 'Shopping', icone: 'fa-bag-shopping', cor: '#9C27B0' },
+            { id: 'padaria', nome: 'Padaria', icone: 'fa-bread-slice', cor: '#795548' },
+            { id: 'cafezinho', nome: 'Cafezinho', icone: 'fa-mug-hot', cor: '#607D8B' },
+            { id: 'noite', nome: 'Noite', icone: 'fa-moon', cor: '#3F51B5' },
+            { id: 'roupas', nome: 'Roupas', icone: 'fa-tshirt', cor: '#E91E63' }
+        ];
+
+        const CORES_ESTILO = [
+            { id: 'roxo', hex: '#8A05BE', nome: 'Nubank' },
+            { id: 'vermelho', hex: '#EC0000', nome: 'Santander' },
+            { id: 'verde_sicoob', hex: '#003641', nome: 'Sicoob' },
+            { id: 'verde_picpay', hex: '#11C76F', nome: 'PicPay' },
+            { id: 'azul', hex: '#0047BB', nome: 'Caixa' },
+            { id: 'prata', hex: '#A6A6A6', nome: 'C6 Bank' },
+            { id: 'preto', hex: '#1A1A1A', nome: 'Black' },
+            { id: 'laranja', hex: '#FF7A00', nome: 'Inter' },
+        ];
+
+        // ÍCONES ADICIONAIS - EXPANDIDO CONFORME SOLICITADO
+        const ICONES_SUBCATEGORIAS = [
+            'fa-utensils', 'fa-burger', 'fa-bag-shopping', 'fa-bread-slice', 'fa-mug-hot',
+            'fa-moon', 'fa-tshirt', 'fa-car', 'fa-gas-pump', 'fa-film',
+            'fa-music', 'fa-book', 'fa-dumbbell', 'fa-heart', 'fa-plane',
+            'fa-train', 'fa-bus', 'fa-taxi', 'fa-bicycle', 'fa-walking',
+            'fa-wine-glass', 'fa-pizza-slice', 'fa-ice-cream', 'fa-coffee', 'fa-beer',
+            'fa-cocktail', 'fa-smoking', 'fa-gamepad', 'fa-futbol', 'fa-basketball',
+            'fa-baseball', 'fa-swimming-pool', 'fa-shopping-cart', 'fa-gift', 'fa-flag',
+            'fa-star', 'fa-gem', 'fa-crown', 'fa-medal', 'fa-trophy',
+            // NOVOS ÍCONES ADICIONADOS:
+            'fa-dog', 'fa-cat', 'fa-tree', 'fa-flask', 'fa-paint-brush',
+            'fa-camera', 'fa-headphones', 'fa-clock', 'fa-calendar', 'fa-envelope',
+            'fa-phone', 'fa-laptop', 'fa-tv', 'fa-wrench', 'fa-bolt',
+            'fa-cloud', 'fa-leaf', 'fa-fire', 'fa-water', 'fa-snowflake',
+            'fa-sun', 'fa-apple-alt', 'fa-fish', 'fa-dragon', 'fa-kiwi-bird',
+            'fa-carrot', 'fa-cookie', 'fa-candy-cane', 'fa-champagne-glasses', 'fa-umbrella',
+            'fa-shoe-prints', 'fa-chair', 'fa-bed', 'fa-plug', 'fa-key'
+        ];
+
+        const FRASES_ALIVIO = ["Ufa, menos uma conta!", "Missão cumprida.", "O bolso agradece!", "Paz de espírito!", "Conta paga, alma lavada!"];
+
+        // --- CAMADA DE USUÁRIOS (LOCAL) ---
+        let usuariosPadrao = [
+            { id: 'u1', nome: 'Marcelo', senha: '2401', thumbnail: '' }
+        ];
+
+        let state = {
+            isLogged: false,
+            currentUser: null,
+            user: null,
+            dados: { 
+                contas: [], 
+                cartoes: [], 
+                fixas: [], 
+                usuarios: usuariosPadrao,
+                subcategoriasGastos: SUBCATEGORIAS_PADRAO
+            },
+            abaAtiva: 'home',
+            filtroStatus: 'todos',
+            filtroOrdem: 'data',
+            filtroDespesaDiaria: false,
+            verSaldo: true,
+            semanasAtivas: [],
+            dataNavegacao: new Date(),
+            modal: null,
+            tipoLancamento: 'conta',
+            passoLancamento: 'selecao',
+            itemSelecionadoId: '',
+            editando: null,
+            tempImagem: null,
+            catSelecionada: 'outros',
+            corSelecionada: CORES_ESTILO[0],
+            feedback: { ativo: false, status: 'sucesso', frase: '' },
+            relFiltroDataInicio: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+            relFiltroDataFim: new Date().toISOString().split('T')[0],
+            expandedCategory: null,
+            faturaFiltroIni: '',
+            faturaFiltroFim: '',
+            notificacaoAba: 'vencidas',
+            verificarMes: new Date().getMonth(),
+            verificarAno: new Date().getFullYear(),
+            notificacoesVerificar: [],
+            // ESTADOS PARA MÓDULO GASTOS
+            gastosFiltroDataInicio: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+            gastosFiltroDataFim: new Date().toISOString().split('T')[0],
+            gastosFiltroSubcategoria: 'todas',
+            modalSubcategoria: false,
+            novaSubcategoria: { nome: '', icone: 'fa-utensils', cor: '#FF9800' },
+            editandoSubcategoria: null,
+            modalLancamentosSubcategoria: false,
+            subcategoriaSelecionada: null,
+            // NOVO: Estado para expansão de subcategoria na lista
+            expandedSubcategoriaId: null
+        };
+
+        // --- FUNÇÕES DE LOGIN COM LEMBRAR USUÁRIO ---
+        window.handleLogin = (e) => {
+            e.preventDefault();
+            const nome = e.target.nome.value;
+            const senha = e.target.senha.value;
+            const lembrar = e.target.lembrar ? e.target.lembrar.checked : false;
+            const found = state.dados.usuarios.find(u => u.nome.toLowerCase() === nome.toLowerCase() && u.senha === senha);
+            
+            if (found) {
+                state.isLogged = true;
+                state.currentUser = found;
+                
+                if (lembrar) {
+                    localStorage.setItem('financeiro_remembered_user', JSON.stringify({
+                        id: found.id,
+                        nome: found.nome,
+                        thumbnail: found.thumbnail
+                    }));
+                } else {
+                    localStorage.removeItem('financeiro_remembered_user');
+                }
+                
+                render();
+            } else {
+                alert("Usuário ou senha incorretos.");
+            }
+        };
+
+        function renderLogin() {
+            const root = document.getElementById('root');
+            
+            const rememberedUser = JSON.parse(localStorage.getItem('financeiro_remembered_user') || 'null');
+            
+            root.innerHTML = `
+                <div class="h-screen bg-black flex flex-col items-center justify-center px-10 animate-in">
+                    <img src="https://marceloricardooficial.github.io/meu-app-financeiro/images/header2.png" alt="Logo" class="w-48 mb-16">
+                    
+                    <form onsubmit="handleLogin(event)" class="w-full max-w-sm space-y-4">
+                        <input name="nome" type="text" placeholder="Usuário" value="${rememberedUser ? rememberedUser.nome : ''}" class="login-input" required>
+                        <input name="senha" type="password" placeholder="Senha" class="login-input" required>
+                        
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="lembrar" name="lembrar" class="w-4 h-4 rounded bg-black border border-[#CCFF00] text-[#CCFF00] focus:ring-0" ${rememberedUser ? 'checked' : ''}>
+                            <label for="lembrar" class="text-[#CCFF00] text-[10px] font-bold uppercase tracking-widest">Manter login ativo</label>
+                        </div>
+                        
+                        <button type="submit" class="w-full py-5 rounded-2xl bg-[#CCFF00] text-black font-black uppercase tracking-widest text-sm shadow-[0_10px_30px_rgba(204,255,0,0.2)] active:scale-95 transition-all">Entrar</button>
+                    </form>
+                    
+                    <p class="mt-12 text-white/20 font-black uppercase text-[9px] tracking-[0.3em]">Gestão de Elite 2026</p>
+                </div>
+            `;
+        }
+
+        // --- FUNÇÕES DE GESTÃO DE USUÁRIO (CORRIGIDAS) ---
+        window.openGerenciarUsuarios = () => {
+            state.abaAtiva = 'usuarios';
+            state.modal = null;
+            render();
+        };
+
+        window.editUsuario = (id) => {
+            const usuario = state.dados.usuarios.find(u => u.id === id);
+            if (usuario) {
+                state.editando = { ...usuario };
+                state.tempImagem = usuario.thumbnail || null;
+                state.modal = 'usuario';
+                render();
+            }
+        };
+
+        window.confirmDeleteUsuario = (id) => {
+            state.itemExcluir = { id, tipo: 'usuario' };
+            state.modal = 'excluir';
+            render();
+        };
+
+        window.handleSalvarUsuario = async (e) => {
+            e.preventDefault();
+            const f = new FormData(e.target);
+            const id = state.editando?.id || Date.now().toString();
+            const novo = {
+                id: id,
+                nome: f.get('nome'),
+                senha: f.get('senha'),
+                thumbnail: state.tempImagem || state.editando?.thumbnail || ''
+            };
+
+            let novosUsers = [...state.dados.usuarios];
+            if (state.editando) novosUsers = novosUsers.map(u => u.id === id ? novo : u);
+            else novosUsers.push(novo);
+
+            state.dados.usuarios = novosUsers;
+            state.editando = null;
+            state.tempImagem = null;
+            state.modal = null;
+            render();
+            await salvarFirebase();
+        };
+
+        // --- FUNÇÕES DE NOTIFICAÇÕES ---
+        function getContasVencidas() {
+            const hoje = new Date().toISOString().split('T')[0];
+            return (state.dados.contas || []).filter(c => !c.pago && c.data < hoje && c.tipo !== 'despesa_diaria');
+        }
+
+        function getNotificacoesVerificar() {
+            const notificacoes = [];
+            const hoje = new Date();
+            const mesSelecionado = state.verificarMes;
+            const anoSelecionado = state.verificarAno;
+            
+            const temLancamentoNoMes = (id, tipo) => {
+                return state.dados.contas.some(c => {
+                    const dataConta = new Date(c.data + 'T12:00:00');
+                    const mesConta = dataConta.getMonth();
+                    const anoConta = dataConta.getFullYear();
+                    
+                    if (tipo === 'cartao' && c.cartaoId !== id) return false;
+                    if (tipo === 'fixa' && c.fixaId !== id) return false;
+                    
+                    return (mesConta === mesSelecionado && anoConta === anoSelecionado);
+                });
+            };
+            
+            (state.dados.cartoes || []).forEach(cartao => {
+                if (cartao.lembrarSemLancamento && !temLancamentoNoMes(cartao.id, 'cartao')) {
+                    const mesNome = new Date(anoSelecionado, mesSelecionado).toLocaleDateString('pt-br', { month: 'long' });
+                    notificacoes.push({
+                        tipo: 'verificar',
+                        origem: 'cartao',
+                        id: cartao.id,
+                        nome: cartao.banco,
+                        imagem: cartao.imagem,
+                        mensagem: `Acho que você esqueceu de mim em ${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}/${anoSelecionado}`,
+                        cor: cartao.cor?.hex || '#1A1A1A'
+                    });
+                }
+            });
+            
+            (state.dados.fixas || []).forEach(fixa => {
+                if (fixa.lembrarSemLancamento && !temLancamentoNoMes(fixa.id, 'fixa')) {
+                    const mesNome = new Date(anoSelecionado, mesSelecionado).toLocaleDateString('pt-br', { month: 'long' });
+                    notificacoes.push({
+                        tipo: 'verificar',
+                        origem: 'fixa',
+                        id: fixa.id,
+                        nome: fixa.nome,
+                        imagem: fixa.imagem,
+                        mensagem: `Acho que você esqueceu de mim em ${mesNome.charAt(0).toUpperCase() + mesNome.slice(1)}/${anoSelecionado}`,
+                        cor: '#000000'
+                    });
+                }
+            });
+            
+            return notificacoes;
+        }
+
+        window.verificarLancamentos = () => {
+            state.notificacoesVerificar = getNotificacoesVerificar();
+            render();
+        };
+
+        window.setVerificarMes = (incremento) => {
+            let novoMes = state.verificarMes + incremento;
+            let novoAno = state.verificarAno;
+            
+            if (novoMes < 0) {
+                novoMes = 11;
+                novoAno--;
+            } else if (novoMes > 11) {
+                novoMes = 0;
+                novoAno++;
+            }
+            
+            state.verificarMes = novoMes;
+            state.verificarAno = novoAno;
+            state.notificacoesVerificar = [];
+            render();
+        };
+
+        function temNotificacoes() {
+            return getContasVencidas().length > 0 || getNotificacoesVerificar().length > 0;
+        }
+
+        // --- RENDERIZAÇÃO PRINCIPAL ---
+        function render() {
+            const root = document.getElementById('root');
+            if (!state.user) return;
+            
+            if (!state.isLogged) {
+                renderLogin();
+                return;
+            }
+
+            root.innerHTML = `
+                <div class="min-h-screen">
+                    ${renderHeader()}
+                    ${renderAbaConteudo()}
+                    ${renderModais()}
+                    ${renderFeedback()}
+                    ${renderFooter()}
+                </div>
+            `;
+        }
+
+        function getSemana2026(dataStr) {
+            let d = new Date(dataStr + 'T12:00:00');
+            
+            const dayOfWeek = d.getDay(); 
+            if (dayOfWeek === 6) {
+                d.setDate(d.getDate() + 2); 
+            } else if (dayOfWeek === 0) {
+                d.setDate(d.getDate() + 1); 
+            }
+            
+            const mes = d.getMonth();
+            const starts = GABARITO_2026[mes] || [1, 8, 15, 22];
+            let semanaEncontrada = 1;
+            for (let i = 0; i < starts.length; i++) {
+                if (d.getDate() >= starts[i]) semanaEncontrada = i + 1;
+            }
+            return semanaEncontrada;
+        }
+
+        function getMaxSemanas(data) {
+            return GABARITO_2026[data.getMonth()]?.length || 5;
+        }
+
+        function renderHeader() {
+            if (state.abaAtiva !== 'home' && state.abaAtiva !== 'usuarios' && state.abaAtiva !== 'gastos') return '';
+            const temNotificacao = temNotificacoes();
+
+            return `
+                <div class="pb-24 pt-12 px-6 bg-[#121212]">
+                    <div class="max-w-md mx-auto flex justify-between items-center text-white">
+                        <div class="flex items-center gap-4">
+                            <img src="https://marceloricardooficial.github.io/meu-app-financeiro/images/header2.png" 
+                                 alt="Logo" 
+                                 class="w-[100px] h-auto object-contain">
+                            
+                            <div class="flex items-center gap-2 border-l border-white/10 pl-4">
+                                <div class="w-8 h-8 rounded-full bg-[#CCFF00] overflow-hidden flex items-center justify-center">
+                                    ${state.currentUser?.thumbnail ? `<img src="${state.currentUser.thumbnail}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-user text-black text-[10px]"></i>`}
+                                </div>
+                                <span class="text-[10px] font-black uppercase text-white/80">${state.currentUser?.nome}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-4">
+                            <div class="relative cursor-pointer active:scale-90 transition-transform" onclick="openGerenciarUsuarios()">
+                                <i class="fa-solid fa-gear text-lg text-[#CCFF00]"></i>
+                            </div>
+                            <div class="relative cursor-pointer active:scale-90 transition-transform" onclick="openModalNotificacoes()">
+                                <i class="fa-solid fa-bell text-lg text-[#CCFF00]"></i>
+                                ${temNotificacao ? `<div class="notification-badge"></div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.openModalNotificacoes = () => {
+            state.modal = 'notificacoes';
+            state.notificacaoAba = 'vencidas';
+            render();
+        }
+
+        window.setNotificacaoAba = (aba) => {
+            state.notificacaoAba = aba;
+            render();
+        };
+
+        // --- FUNÇÕES PARA MÓDULO GASTOS (CORRIGIDAS) ---
+        window.setGastosFiltroDataInicio = (valor) => {
+            state.gastosFiltroDataInicio = valor;
+            render();
+        };
+
+        window.setGastosFiltroDataFim = (valor) => {
+            state.gastosFiltroDataFim = valor;
+            render();
+        };
+
+        window.setGastosFiltroSubcategoria = (valor) => {
+            state.gastosFiltroSubcategoria = valor;
+            render();
+        };
+
+        window.aplicarFiltrosGastos = () => {
+            render();
+        };
+
+        window.openModalNovaSubcategoria = () => {
+            state.modalSubcategoria = true;
+            state.editandoSubcategoria = null;
+            state.novaSubcategoria = { nome: '', icone: 'fa-utensils', cor: '#FF9800' };
+            render();
+        };
+
+        window.closeModalSubcategoria = () => {
+            state.modalSubcategoria = false;
+            state.editandoSubcategoria = null;
+            state.novaSubcategoria = { nome: '', icone: 'fa-utensils', cor: '#FF9800' };
+            render();
+        };
+
+        window.setIconeSubcategoria = (icone) => {
+            state.novaSubcategoria.icone = icone;
+            render();
+        };
+
+        // CORREÇÃO: Função de salvar subcategoria – lê nome diretamente do DOM e fecha modal após sucesso
+        window.salvarNovaSubcategoria = async () => {
+            // Captura o valor do input diretamente do DOM para garantir que não seja perdido
+            const inputNome = document.getElementById('nome-subcategoria');
+            let nome = inputNome ? inputNome.value.trim() : state.novaSubcategoria.nome.trim();
+            
+            if (!nome) {
+                alert("Digite um nome para a subcategoria");
+                return;
+            }
+
+            if (state.editandoSubcategoria) {
+                // Atualizar subcategoria existente
+                state.dados.subcategoriasGastos = state.dados.subcategoriasGastos.map(s => 
+                    s.id === state.editandoSubcategoria.id ? { 
+                        ...state.novaSubcategoria, 
+                        nome: nome, // usa o nome capturado
+                        id: state.editandoSubcategoria.id 
+                    } : s
+                );
+            } else {
+                // Criar nova subcategoria
+                const novaSubcategoria = {
+                    id: Date.now().toString(),
+                    nome: nome,
+                    icone: state.novaSubcategoria.icone,
+                    cor: state.novaSubcategoria.cor
+                };
+                state.dados.subcategoriasGastos = [...state.dados.subcategoriasGastos, novaSubcategoria];
+            }
+            
+            await salvarFirebase();
+            
+            // Fecha o modal e limpa o estado
+            state.modalSubcategoria = false;
+            state.editandoSubcategoria = null;
+            state.novaSubcategoria = { nome: '', icone: 'fa-utensils', cor: '#FF9800' };
+            
+            // Garante que a aba de gastos seja renderizada com a lista atualizada
+            render();
+        };
+
+        window.editarSubcategoria = (id) => {
+            const subcategoria = state.dados.subcategoriasGastos.find(s => s.id === id);
+            if (!subcategoria) return;
+            
+            state.editandoSubcategoria = subcategoria;
+            state.novaSubcategoria = { ...subcategoria };
+            state.modalSubcategoria = true;
+            render();
+        };
+
+        window.excluirSubcategoria = async (id) => {
+            const lancamentosAssociados = state.dados.contas.filter(c => 
+                c.tipo === 'despesa_diaria' && c.subcategoriaId === id
+            );
+            
+            if (lancamentosAssociados.length > 0) {
+                if (!confirm("Esta subcategoria possui lançamentos associados. Deseja excluir mesmo assim?")) {
+                    return;
+                }
+            }
+            
+            state.dados.subcategoriasGastos = state.dados.subcategoriasGastos.filter(s => s.id !== id);
+            
+            if (lancamentosAssociados.length > 0) {
+                state.dados.contas = state.dados.contas.map(c => {
+                    if (c.tipo === 'despesa_diaria' && c.subcategoriaId === id) {
+                        return { ...c, subcategoriaId: null };
+                    }
+                    return c;
+                });
+            }
+            
+            await salvarFirebase();
+            render();
+        };
+
+        // NOVO: Função para alternar expansão da subcategoria
+        window.toggleExpandSubcategoria = (id) => {
+            state.expandedSubcategoriaId = state.expandedSubcategoriaId === id ? null : id;
+            render();
+        };
+
+        // Função para obter lançamentos de uma subcategoria (ordenados por data)
+        function getLancamentosPorSubcategoria(subcategoriaId) {
+            return state.dados.contas
+                .filter(c => c.tipo === 'despesa_diaria' && c.subcategoriaId === subcategoriaId)
+                .sort((a, b) => new Date(b.data) - new Date(a.data));
+        }
+
+        window.openLancamentosSubcategoria = (subcategoriaId) => {
+            const subcategoria = state.dados.subcategoriasGastos.find(s => s.id === subcategoriaId);
+            if (!subcategoria) return;
+            
+            state.subcategoriaSelecionada = subcategoria;
+            state.modalLancamentosSubcategoria = true;
+            render();
+        };
+
+        window.closeModalLancamentosSubcategoria = () => {
+            state.modalLancamentosSubcategoria = false;
+            state.subcategoriaSelecionada = null;
+            render();
+        };
+
+        function getDespesasDiariasFiltradas() {
+            let despesas = state.dados.contas.filter(c => c.tipo === 'despesa_diaria');
+            
+            if (state.gastosFiltroDataInicio) {
+                despesas = despesas.filter(c => c.data >= state.gastosFiltroDataInicio);
+            }
+            if (state.gastosFiltroDataFim) {
+                despesas = despesas.filter(c => c.data <= state.gastosFiltroDataFim);
+            }
+            
+            if (state.gastosFiltroSubcategoria !== 'todas') {
+                despesas = despesas.filter(c => c.subcategoriaId === state.gastosFiltroSubcategoria);
+            }
+            
+            return despesas;
+        }
+
+        function getTotaisPorSubcategoria() {
+            const despesasFiltradas = getDespesasDiariasFiltradas();
+            const totais = {};
+            
+            state.dados.subcategoriasGastos.forEach(sub => {
+                totais[sub.id] = {
+                    subcategoria: sub,
+                    total: 0,
+                    quantidade: 0
+                };
+            });
+            
+            despesasFiltradas.forEach(despesa => {
+                if (despesa.subcategoriaId && totais[despesa.subcategoriaId]) {
+                    totais[despesa.subcategoriaId].total += despesa.valor;
+                    totais[despesa.subcategoriaId].quantidade++;
+                }
+            });
+            
+            return Object.values(totais)
+                .filter(item => item.total > 0 || state.gastosFiltroSubcategoria === 'todas')
+                .sort((a, b) => b.total - a.total);
+        }
+
+        function renderGastos() {
+            const totaisPorSubcategoria = getTotaisPorSubcategoria();
+            const totalGeral = totaisPorSubcategoria.reduce((sum, item) => sum + item.total, 0);
+            
+            return `
+                <div class="p-6 max-w-md mx-auto pt-12 animate-in pb-40">
+                    <div class="flex items-center gap-4 mb-6">
+                        <button onclick="setAba('home')" class="text-black text-2xl active:scale-90 transition-all mr-1">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <h2 class="text-4xl font-black text-black uppercase italic">Despesas Diárias</h2>
+                    </div>
+                    
+                    <div class="filtros-gastos">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="text-[8px] font-black uppercase text-gray-400 mb-1 block">Data Início</label>
+                                <input type="date" 
+                                       value="${state.gastosFiltroDataInicio}" 
+                                       onchange="setGastosFiltroDataInicio(this.value)"
+                                       class="input-light w-full" />
+                            </div>
+                            <div>
+                                <label class="text-[8px] font-black uppercase text-gray-400 mb-1 block">Data Fim</label>
+                                <input type="date" 
+                                       value="${state.gastosFiltroDataFim}" 
+                                       onchange="setGastosFiltroDataFim(this.value)"
+                                       class="input-light w-full" />
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="text-[8px] font-black uppercase text-gray-400 mb-1 block">Subcategoria</label>
+                            <select onchange="setGastosFiltroSubcategoria(this.value)" 
+                                    class="select-subcategoria">
+                                <option value="todas" ${state.gastosFiltroSubcategoria === 'todas' ? 'selected' : ''}>Todas as subcategorias</option>
+                                ${state.dados.subcategoriasGastos.map(sub => `
+                                    <option value="${sub.id}" ${state.gastosFiltroSubcategoria === sub.id ? 'selected' : ''}>${sub.nome}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        
+                        <button onclick="aplicarFiltrosGastos()" class="btn-filtrar-gastos">
+                            <i class="fa-solid fa-filter"></i> Aplicar Filtros
+                        </button>
+                    </div>
+                    
+                    <div class="bg-black rounded-[32px] p-6 text-white mb-8 shadow-xl">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-[9px] font-black uppercase text-[#CCFF00] block mb-1">Total no Período</span>
+                                <p class="text-3xl font-black">R$ ${totalGeral.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[9px] font-black uppercase text-white/40 block mb-1">Subcategorias</span>
+                                <p class="text-xl font-black">${totaisPorSubcategoria.length}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <h4 class="text-black font-black uppercase text-xs mb-6 flex items-center justify-between">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-layer-group text-gray-300"></i> Subcategorias</span>
+                            <span class="text-[10px] text-gray-400">${totaisPorSubcategoria.length} itens</span>
+                        </h4>
+                        
+                        ${totaisPorSubcategoria.length > 0 ? `
+                            <div class="space-y-4">
+                                ${totaisPorSubcategoria.map(item => {
+                                    const lancamentos = getLancamentosPorSubcategoria(item.subcategoria.id);
+                                    const isExpanded = state.expandedSubcategoriaId === item.subcategoria.id;
+                                    return `
+                                        <div class="subcategoria-item" onclick="toggleExpandSubcategoria('${item.subcategoria.id}')">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-4">
+                                                    <div class="subcategoria-thumb" style="background: ${item.subcategoria.cor}">
+                                                        <i class="fa-solid ${item.subcategoria.icone}"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h5 class="text-sm font-black text-black">${item.subcategoria.nome}</h5>
+                                                        <p class="text-[9px] font-black uppercase text-gray-400">${item.quantidade} lançamentos</p>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center gap-2" onclick="event.stopPropagation()">
+                                                    <button onclick="openLancamentosSubcategoria('${item.subcategoria.id}')" class="w-8 h-8 rounded-full bg-[#CCFF00] flex items-center justify-center text-black active:scale-90">
+                                                        <i class="fa-solid fa-plus text-[10px]"></i>
+                                                    </button>
+                                                    <button onclick="editarSubcategoria('${item.subcategoria.id}')" class="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white active:scale-90">
+                                                        <i class="fa-solid fa-pen text-[10px]"></i>
+                                                    </button>
+                                                    <button onclick="excluirSubcategoria('${item.subcategoria.id}')" class="w-8 h-8 rounded-full bg-[#f44336] flex items-center justify-center text-white active:scale-90">
+                                                        <i class="fa-solid fa-trash text-[10px]"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="text-right mt-2">
+                                                <span class="text-lg font-black text-black block">R$ ${item.total.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                                ${totalGeral > 0 ? `
+                                                    <span class="text-[10px] font-black text-gray-400">
+                                                        ${((item.total / totalGeral) * 100).toFixed(1)}%
+                                                    </span>
+                                                ` : ''}
+                                            </div>
+                                            <!-- NOVO: Conteúdo expandido com lançamentos -->
+                                            <div class="subcategoria-expand-content ${isExpanded ? 'open' : ''}" onclick="event.stopPropagation()">
+                                                ${lancamentos.length > 0 ? lancamentos.map(l => `
+                                                    <div class="subcategoria-lancamento-item">
+                                                        <div>
+                                                            <span class="text-xs font-bold text-gray-700">${l.nome}</span>
+                                                            <span class="text-[9px] text-gray-500 block">${new Date(l.data + 'T12:00:00').toLocaleDateString('pt-br')}</span>
+                                                        </div>
+                                                        <span class="text-xs font-black text-gray-900">R$ ${l.valor.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                `).join('') : `
+                                                    <p class="text-[10px] text-gray-400 text-center py-2">Nenhum lançamento</p>
+                                                `}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : `
+                            <div class="empty-state">
+                                <i class="fa-solid fa-receipt"></i>
+                                <p class="text-[10px] font-black uppercase">Nenhuma despesa encontrada</p>
+                                <p class="text-[9px] text-gray-400 mt-2">Ajuste os filtros ou registre novas despesas</p>
+                            </div>
+                        `}
+                    </div>
+                    
+                    <button onclick="openModalNovaSubcategoria()" class="btn-nova-subcategoria w-full mb-20">
+                        <i class="fa-solid fa-plus"></i> Cadastrar nova subcategoria
+                    </button>
+                </div>
+            `;
+        }
+
+        function getFilteredRelatorioData() {
+            const todasAsContas = (state.dados.contas || []).filter(c => c.tipo !== 'despesa_diaria');
+            const contasNoPeriodo = todasAsContas.filter(c => c.data >= state.relFiltroDataInicio && c.data <= state.relFiltroDataFim);
+            
+            const despesasDiarias = (state.dados.contas || []).filter(c => 
+                c.tipo === 'despesa_diaria' && 
+                c.pago === true &&
+                c.data >= state.relFiltroDataInicio && 
+                c.data <= state.relFiltroDataFim
+            );
+            
+            const totalContasRegulares = contasNoPeriodo.reduce((a, b) => a + b.valor, 0);
+            const totalDespesasDiarias = despesasDiarias.reduce((a, b) => a + b.valor, 0);
+            const totalGeral = totalContasRegulares + totalDespesasDiarias;
+            
+            const percentualDespesasDiarias = totalGeral > 0 ? ((totalDespesasDiarias / totalGeral) * 100).toFixed(1) : 0;
+
+            const catMap = contasNoPeriodo.reduce((acc, c) => {
+                const catId = c.categoria || 'outros';
+                if (!acc[catId]) acc[catId] = [];
+                acc[catId].push(c);
+                return acc;
+            }, {});
+
+            const resumoCategorias = Object.keys(catMap).map(cid => {
+                const info = CATEGORIAS.find(cx => cx.id === cid) || CATEGORIAS.find(cx => cx.id === 'outros');
+                const total = catMap[cid].reduce((a, b) => a + b.valor, 0);
+                return { 
+                    id: cid, 
+                    nome: info.nome, 
+                    icone: info.icone, 
+                    cor: info.cor, 
+                    total, 
+                    count: catMap[cid].length,
+                    percentual: totalGeral > 0 ? ((total / totalGeral) * 100).toFixed(1) : 0,
+                    itens: catMap[cid].sort((a,b) => b.data.localeCompare(a.data))
+                };
+            }).sort((a, b) => b.total - a.total);
+
+            const cartoesNoPeriodo = contasNoPeriodo.filter(c => c.cartaoId);
+            const totalCartoes = cartoesNoPeriodo.reduce((a, b) => a + b.valor, 0);
+            const cartoesMap = cartoesNoPeriodo.reduce((acc, c) => {
+                if (!acc[c.cartaoId]) acc[c.cartaoId] = { total: 0, count: 0 };
+                acc[c.cartaoId].total += c.valor;
+                acc[c.cartaoId].count++;
+                return acc;
+            }, {});
+
+            const resumoCartoes = Object.keys(cartoesMap).map(cid => {
+                const info = state.dados.cartoes.find(cx => cx.id === cid);
+                const total = cartoesMap[cid].total;
+                return {
+                    id: cid,
+                    nome: info?.banco || 'Desconhecido',
+                    titular: info?.titular || '',
+                    cor: info?.cor?.hex || '#1A1A1A',
+                    total,
+                    percentual: totalCartoes > 0 ? ((total / totalCartoes) * 100).toFixed(1) : 0
+                };
+            }).sort((a, b) => b.total - a.total);
+
+            const insights = [];
+            if (totalGeral > 0) {
+                const topCat = resumoCategorias[0];
+                insights.push(`A categoria <b>${topCat.nome}</b> domina seus gastos com R$ ${topCat.total.toLocaleString('pt-br')}.`);
+                const percCartao = totalGeral > 0 ? ((totalCartoes / totalGeral) * 100).toFixed(0) : 0;
+                insights.push(`Cartões de crédito representam <b>${percCartao}%</b> do total no período.`);
+                if (resumoCartoes.length > 0) {
+                    insights.push(`O cartão <b>${resumoCartoes[0].nome}</b> é o seu principal meio de pagamento atual.`);
+                }
+                const mesesMap = contasNoPeriodo.reduce((acc, c) => {
+                    const m = c.data.substring(0, 7);
+                    acc[m] = (acc[m] || 0) + c.valor;
+                    return acc;
+                }, {});
+                const topMes = Object.keys(mesesMap).sort((a,b) => mesesMap[b] - mesesMap[a])[0];
+                const mesNome = new Date(topMes + '-01T12:00:00').toLocaleString('pt-br', { month: 'long', year: 'numeric' });
+                insights.push(`<b>${mesNome}</b> registrou o pico de despesas neste intervalo.`);
+                const totalFixas = contasNoPeriodo.filter(c => c.fixaId).reduce((a,b) => a + b.valor, 0);
+                insights.push(`Suas contas fixas consomem <b>${((totalFixas / totalGeral) * 100).toFixed(0)}%</b> do orçamento.`);
+                const gastoCompras = resumoCategorias.find(c => c.id === 'compras')?.total || 0;
+                insights.push(gastoCompras > 0 ? `Você gastou R$ ${gastoCompras.toLocaleString('pt-br')} em <b>Compras</b> manuais.` : `Nenhum gasto registrado em <b>Compras</b> no período.`);
+            } else {
+                insights.push("Selecione um período com dados para gerar insights.");
+            }
+
+            return { 
+                totalGeral, 
+                resumoCategorias, 
+                insights, 
+                totalCartoes, 
+                resumoCartoes,
+                totalDespesasDiarias,
+                percentualDespesasDiarias,
+                despesasDiarias
+            };
+        }
+
+        function renderRelatorioCompleto() {
+            const dataRel = getFilteredRelatorioData();
+
+            return `
+                <div class="p-6 max-w-md mx-auto pt-12 animate-in pb-40">
+                    <div class="flex items-center gap-4 mb-2">
+                        <button onclick="setAba('home')" class="text-black text-2xl active:scale-90 transition-all mr-1">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <h2 class="text-4xl font-black text-black uppercase italic">Relatório</h2>
+                    </div>
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-8">Filtro por Período</p>
+
+                    <div class="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 mb-8 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[8px] font-black uppercase text-gray-400 mb-1 block">Início</label>
+                                <input id="rel-data-ini" type="date" value="${state.relFiltroDataInicio}" class="input-light w-full" />
+                            </div>
+                            <div>
+                                <label class="text-[8px] font-black uppercase text-gray-400 mb-1 block">Fim</label>
+                                <input id="rel-data-fim" type="date" value="${state.relFiltroDataFim}" class="input-light w-full" />
+                            </div>
+                        </div>
+                        <button onclick="aplicarFiltroRelatorio()" class="w-full py-4 bg-black text-[#CCFF00] rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">OK - Aplicar Filtro</button>
+                    </div>
+
+                    <div class="bg-black rounded-[40px] p-8 text-white mb-8 shadow-2xl border-t border-white/10">
+                        <span class="text-[9px] font-black uppercase text-[#CCFF00] tracking-widest italic block mb-2">Total no Período</span>
+                        <h3 class="text-5xl font-black">R$ ${dataRel.totalGeral.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</h3>
+                        
+                        <div class="space-y-4 mt-6">
+                            ${dataRel.resumoCategorias.slice(0, 4).map(c => `
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-2 h-2 rounded-full" style="background: ${c.cor}"></div>
+                                        <span class="text-[12px] font-black uppercase text-[#cccccc]">${c.nome}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-[13px] font-black">R$ ${c.total.toLocaleString('pt-br')}</span>
+                                        <span class="text-[10px] font-bold text-[#CCFF00] ml-2">${c.percentual}%</span>
+                                    </div>
+                                </div>
+                                <div class="w-full h-[3px] bg-white/5 rounded-full overflow-hidden">
+                                    <div class="h-full" style="width: ${c.percentual}%; background: ${c.cor}"></div>
+                                </div>
+                            `).join('')}
+                            
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full" style="background: #4CAF50"></div>
+                                    <span class="text-[12px] font-black uppercase text-[#cccccc]">Despesas Diárias</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[13px] font-black">R$ ${dataRel.totalDespesasDiarias.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                    <span class="text-[10px] font-bold text-[#CCFF00] ml-2">${dataRel.percentualDespesasDiarias}%</span>
+                                </div>
+                            </div>
+                            <div class="w-full h-[3px] bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full" style="width: ${Math.min(dataRel.percentualDespesasDiarias, 100)}%; background: #4CAF50"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-8 bg-white rounded-[32px] p-6 border border-gray-100 shadow-sm">
+                        <h4 class="text-black font-black uppercase text-xs mb-6 flex items-center justify-between">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-credit-card text-gray-300"></i> Gastos em Cartão</span>
+                            <span class="text-[10px] text-gray-400">Total: R$ ${dataRel.totalCartoes.toLocaleString('pt-br')}</span>
+                        </h4>
+                        <div class="space-y-4">
+                            ${dataRel.resumoCartoes.length > 0 ? dataRel.resumoCartoes.map(card => `
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-2 h-2 rounded-full" style="background: ${card.cor}"></div>
+                                        <div>
+                                            <span class="text-[11px] font-black uppercase text-gray-600">${card.nome}</span>
+                                            <span class="text-[9px] text-gray-400 block">${card.titular}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between flex-1 ml-4">
+                                        <span class="text-[12px] font-bold text-black">R$ ${card.total.toLocaleString('pt-br')}</span>
+                                        <span class="text-[10px] font-black text-gray-400">${card.percentual}%</span>
+                                    </div>
+                                </div>
+                                <div class="w-full h-1.5 bg-gray-50 rounded-full overflow-hidden">
+                                    <div class="h-full" style="width: ${card.percentual}%; background: ${card.cor}"></div>
+                                </div>
+                            `).join('') : '<p class="text-[9px] uppercase font-black text-gray-300 text-center py-4">Nenhum gasto em cartão no período</p>'}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 mb-8">
+                        ${dataRel.insights.map(ins => `
+                            <div class="insight-card">
+                                <div class="w-10 h-10 rounded-full bg-[#CCFF00] flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-bolt text-black text-xs"></i></div>
+                                <p class="text-black font-medium text-[11px] leading-relaxed uppercase">${ins}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="mb-20">
+                        <h4 class="text-black font-black uppercase text-xs mb-6 flex items-center gap-3"><i class="fa-solid fa-layer-group text-gray-300"></i> Distribuição por Categoria</h4>
+                        <div class="space-y-3">
+                            ${dataRel.resumoCategorias.map(cat => {
+                                const isExpanded = state.expandedCategory === cat.id;
+                                return `
+                                <div class="bg-white rounded-[32px] overflow-hidden border border-gray-100 shadow-sm transition-all">
+                                    <div class="p-2 flex justify-between items-center">
+                                        <div class="p-4 flex justify-between items-center w-full">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white" style="background: ${cat.cor}"><i class="fa-solid ${cat.icone}"></i></div>
+                                                <div>
+                                                    <h5 class="text-xs font-black uppercase text-black">${cat.nome}</h5>
+                                                    <p class="text-[9px] font-bold text-gray-400 uppercase">${cat.count} lançamentos</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <div class="text-right">
+                                                    <span class="text-sm font-black text-black block">R$ ${cat.total.toLocaleString('pt-br')}</span>
+                                                    <span class="text-[8px] font-black text-[#11C76F] uppercase">Fatia: ${cat.percentual}%</span>
+                                                </div>
+                                                <button onclick="toggleRelatorioExpand('${cat.id}')" class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-black active:scale-90 transition-all">
+                                                    <i class="fa-solid ${isExpanded ? 'fa-minus' : 'fa-plus'} text-[10px]"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="cat-expand-content ${isExpanded ? 'open' : ''} bg-gray-50/50">
+                                        <div class="px-6 pb-6 pt-2 space-y-3">
+                                            <div class="h-px bg-gray-100 w-full mb-4"></div>
+                                            ${cat.itens.map(item => `
+                                                <div class="flex justify-between items-center">
+                                                    <div class="flex flex-col">
+                                                        <span class="text-[10px] font-bold text-black uppercase truncate max-w-[140px]">${item.nome}</span>
+                                                        <span class="text-[8px] font-black text-gray-400 uppercase">${new Date(item.data + 'T12:00:00').toLocaleDateString('pt-br')}</span>
+                                                    </div>
+                                                    <span class="text-[10px] font-black text-black">R$ ${item.valor.toLocaleString('pt-br')}</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            `}).join('')}
+                            
+                            ${dataRel.totalDespesasDiarias > 0 ? `
+                                <div class="bg-white rounded-[32px] overflow-hidden border border-gray-100 shadow-sm transition-all">
+                                    <div class="p-2 flex justify-between items-center">
+                                        <div class="p-4 flex justify-between items-center w-full">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white" style="background: #4CAF50"><i class="fa-solid fa-calendar-day"></i></div>
+                                                <div>
+                                                    <h5 class="text-xs font-black uppercase text-black">Despesas Diárias</h5>
+                                                    <p class="text-[9px] font-bold text-gray-400 uppercase">${dataRel.despesasDiarias.length} lançamentos</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <div class="text-right">
+                                                    <span class="text-sm font-black text-black block">R$ ${dataRel.totalDespesasDiarias.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                                    <span class="text-[8px] font-black text-[#11C76F] uppercase">Fatia: ${dataRel.percentualDespesasDiarias}%</span>
+                                                </div>
+                                                <button onclick="toggleRelatorioExpand('despesa_diaria')" class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-black active:scale-90 transition-all">
+                                                    <i class="fa-solid ${state.expandedCategory === 'despesa_diaria' ? 'fa-minus' : 'fa-plus'} text-[10px]"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="cat-expand-content ${state.expandedCategory === 'despesa_diaria' ? 'open' : ''} bg-gray-50/50">
+                                        <div class="px-6 pb-6 pt-2 space-y-3">
+                                            <div class="h-px bg-gray-100 w-full mb-4"></div>
+                                            ${dataRel.despesasDiarias.map(item => `
+                                                <div class="flex justify-between items-center">
+                                                    <div class="flex flex-col">
+                                                        <span class="text-[10px] font-bold text-black uppercase truncate max-w-[140px]">${item.nome}</span>
+                                                        <span class="text-[8px] font-black text-gray-400 uppercase">${new Date(item.data + 'T12:00:00').toLocaleDateString('pt-br')}</span>
+                                                    </div>
+                                                    <span class="text-[10px] font-black text-black">R$ ${item.valor.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.toggleRelatorioExpand = (id) => {
+            state.expandedCategory = state.expandedCategory === id ? null : id;
+            render();
+        };
+
+        window.aplicarFiltroRelatorio = () => {
+            state.relFiltroDataInicio = document.getElementById('rel-data-ini').value;
+            state.relFiltroDataFim = document.getElementById('rel-data-fim').value;
+            render();
+        };
+
+        function renderAbaConteudo() {
+            const stats = calculateStats();
+            
+            if (state.abaAtiva === 'home') {
+                const maxSemanas = getMaxSemanas(state.dataNavegacao);
+                const semanasArray = Array.from({length: maxSemanas}, (_, i) => i + 1);
+
+                return `
+                    <div class="max-w-md mx-auto px-4 -mt-16 relative animate-in">
+                        <div class="absolute right-0 top-8 z-30 shadow-2xl flex items-center bg-black rounded-l-2xl py-2 pl-4 pr-6 border-l border-t border-b border-white/10">
+                            <button onclick="changeMonth(-1)" class="text-[#CCFF00] p-1"><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
+                            <span class="mx-3 text-[10px] font-black text-white uppercase tracking-widest min-w-[40px] text-center">
+                                ${state.dataNavegacao.toLocaleString('pt-br', { month: 'short' }).replace('.', '')}
+                            </span>
+                            <button onclick="changeMonth(1)" class="text-[#CCFF00] p-1"><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+                        </div>
+                        <div class="rounded-[40px] p-6 pb-16 shadow-2xl relative overflow-hidden bg-[#CCFF00]">
+                            <div class="flex justify-between items-start mb-2 text-black/60 text-[10px] font-black uppercase tracking-widest">
+                                <span>${state.semanasAtivas.length > 0 ? `Sem: ${state.semanasAtivas.join(',')}` : "A PAGAR"}</span>
+                                <button onclick="toggleSaldo()" class="text-black/40"><i class="fa-solid ${state.verSaldo ? 'fa-eye' : 'fa-eye-slash'}"></i></button>
+                            </div>
+                            <div class="h-12 flex items-center">
+                                ${state.verSaldo ? `<h1 class="text-4xl font-black text-black tracking-tighter">R$ ${stats.pendente.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</h1>` : `<div class="w-40 h-8 bg-black/10 rounded-full animate-pulse"></div>`}
+                            </div>
+                            <div class="mt-8 grid grid-cols-2 gap-6 border-t border-black/15 pt-6">
+                                <div class="flex flex-col"><span class="text-[10px] font-black text-black uppercase mb-1">Contas</span><span class="text-sm font-black text-black">${stats.qtd} itens</span></div>
+                                <div class="flex flex-col border-l border-black/15 pl-6"><span class="text-[10px] font-black text-black uppercase mb-1">Pago</span><span class="text-sm font-black text-black">R$ ${stats.pago.toLocaleString('pt-br', { minimumFractionDigits: 0 })}</span></div>
+                            </div>
+                        </div>
+                        <div class="absolute -bottom-6 left-0 w-full px-6 flex justify-between gap-2 z-20 overflow-x-auto no-scrollbar pb-2">
+                            <button onclick="setSemana('all')" class="w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center text-[10px] font-black border-4 shadow-xl transition-all ${state.semanasAtivas.length === 0 ? 'bg-black text-[#CCFF00]' : 'bg-white text-black'}" style="border-color: #F4F4F4">ALL</button>
+                            ${semanasArray.map(n => `
+                                <button onclick="setSemana(${n})" class="w-12 h-12 flex-shrink-0 rounded-full flex flex-col items-center justify-center border-4 shadow-xl transition-all ${state.semanasAtivas.includes(n) ? 'bg-black text-[#CCFF00] scale-110' : 'bg-white text-black'}" style="border-color: #F4F4F4">
+                                    <span class="text-[7px] font-bold uppercase">S</span>
+                                    <span class="text-sm font-black">${n}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="max-w-md mx-auto px-4 mt-10">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex bg-white/50 backdrop-blur-md border border-gray-200 p-1 rounded-2xl gap-1 w-fit">
+                                ${['todos', 'pendentes', 'pagos'].map(f => `
+                                    <button onclick="setFiltroStatus('${f}')" class="w-9 h-9 rounded-xl flex items-center justify-center transition-all ${state.filtroStatus === f ? 'bg-black text-[#CCFF00] shadow-lg scale-105' : 'text-gray-400'}">
+                                        <i class="fa-solid ${f==='todos'?'fa-list-ul':f==='pendentes'?'fa-clock':'fa-check-double'} text-[11px]"></i>
+                                </button>
+                                `).join('')}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="flex bg-white/50 backdrop-blur-md border border-gray-200 p-1 rounded-2xl gap-1 w-fit">
+                                    <button onclick="setFiltroOrdem('data')" class="w-9 h-9 rounded-xl flex items-center justify-center transition-all ${state.filtroOrdem === 'data' ? 'bg-black text-[#CCFF00] shadow-lg scale-105' : 'text-gray-400'}">
+                                        <i class="fa-solid fa-calendar-days text-[11px]"></i>
+                                    </button>
+                                    <button onclick="setFiltroOrdem('valor')" class="w-9 h-9 rounded-xl flex items-center justify-center transition-all ${state.filtroOrdem === 'valor' ? 'bg-black text-[#CCFF00] shadow-lg scale-105' : 'text-gray-400'}">
+                                        <i class="fa-solid fa-arrow-down-9-1 text-[11px]"></i>
+                                    </button>
+                                </div>
+                                <button onclick="toggleFiltroDespesaDiaria()" class="w-9 h-9 rounded-xl flex items-center justify-center transition-all ${state.filtroDespesaDiaria ? 'filter-despesa-diaria shadow-lg scale-105' : 'bg-white/50 text-gray-400 border border-gray-200'}">
+                                    <i class="fa-solid fa-sun text-[11px]"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="rounded-[32px] shadow-sm overflow-hidden border border-gray-200 bg-white divide-y divide-gray-50 mb-10">
+                            ${stats.lista.length > 0 ? stats.lista.map((c, idx) => renderItemConta(c, idx)).join('') : `<div class="p-12 text-center opacity-20"><i class="fa-solid fa-ghost text-4xl mb-2"></i><p class="text-[10px] font-black uppercase">Vazio</p></div>`}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.abaAtiva === 'relatorios') return renderRelatorioCompleto();
+            
+            if (state.abaAtiva === 'gastos') return renderGastos();
+
+            if (state.abaAtiva === 'cartoes') {
+                return `
+                    <div class="p-6 max-w-md mx-auto pt-16 animate-in">
+                        <h2 class="text-4xl font-black text-black uppercase mb-10">Meus Cartões</h2>
+                        <div class="grid gap-6">
+                            ${state.dados.cartoes.map(c => `
+                                <div onclick="openFaturas('${c.id}')" class="rounded-[32px] p-7 shadow-2xl relative overflow-hidden cursor-pointer active:scale-95 transition-all" style="background: ${c.cor?.hex || '#111'}; color: #fff">
+                                    <div class="flex justify-between items-start mb-8">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center overflow-hidden">
+                                                ${c.imagem ? `<img src="${c.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid fa-credit-card"></i>`}
+                                            </div>
+                                            <div><h3 class="text-base font-black uppercase tracking-tighter text-white">${c.banco}</h3><p class="text-[8px] font-black opacity-60 tracking-[0.2em] uppercase">Setor: ${CATEGORIAS.find(cat => cat.id === (c.categoria || 'cartao_credito'))?.nome}</p></div>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <button onclick="event.stopPropagation(); editCartao('${c.id}')" class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid fa-pen text-[9px]"></i></button>
+                                            <button onclick="event.stopPropagation(); confirmDelete('${c.id}', 'cartao_db')" class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid fa-trash text-[9px]"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-end">
+                                        <span class="text-xs font-black uppercase tracking-widest text-white/90">${c.titular || 'TITULAR'}</span>
+                                        <div class="text-right"><span class="text-[9px] uppercase font-black opacity-50 block">FECHAMENTO</span><span class="text-sm font-black">DIA ${c.diaFatura}</span></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            <button onclick="openModalCartao()" class="w-full h-24 rounded-[32px] border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 gap-3 uppercase font-black text-xs hover:border-[#CCFF00] hover:text-[#CCFF00] transition-all"><i class="fa-solid fa-plus"></i> Novo Cartão</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.abaAtiva === 'fixas') {
+                return `
+                    <div class="min-h-screen pt-16 animate-in">
+                        <div class="px-6 mb-8 max-w-md mx-auto">
+                            <h2 class="text-4xl font-black text-black uppercase mb-8">Contas Fixas</h2>
+                            <button onclick="openModalFixa()" class="flex items-center gap-3 bg-white p-3 pr-6 rounded-full shadow-sm">
+                                <div class="w-10 h-10 rounded-full bg-[#11C76F] flex items-center justify-center text-white"><i class="fa-solid fa-plus"></i></div>
+                                <span class="text-[10px] font-black uppercase text-black tracking-widest">Nova conta fixa</span>
+                                </button>
+                        </div>
+                        <div class="divide-y divide-gray-100 bg-white">
+                            ${state.dados.fixas.map(f => `
+                                <div onclick="openFaturasFixas('${f.id}')" class="px-6 py-5 flex items-center justify-between hover:bg-gray-50 cursor-pointer active:bg-gray-100 transition-colors">
+                                    <div class="max-w-md mx-auto w-full flex items-center justify-between">
+                                        <div class="flex items-center gap-4 flex-1">
+                                            <div class="w-12 h-12 rounded-xl border border-gray-100 flex items-center justify-center bg-gray-50 overflow-hidden">
+                                                ${f.imagem ? `<img src="${f.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${CATEGORIAS.find(cat => cat.id === f.categoria)?.icone || 'fa-receipt'} text-black/10"></i>`}
+                                            </div>
+                                            <div><h4 class="text-sm font-black text-black">${f.nome}</h4><span class="text-[9px] font-black uppercase text-black/40 tracking-widest">Venc. Dia ${f.diaVencimento}</span></div>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <button onclick="event.stopPropagation(); editFixa('${f.id}')" class="w-9 h-9 rounded-xl bg-black flex items-center justify-center"><i class="fa-solid fa-pen text-[9px] text-[#CCFF00]"></i></button>
+                                            <button onclick="event.stopPropagation(); confirmDelete('${f.id}', 'fixa')" class="w-9 h-9 rounded-xl bg-black flex items-center justify-center"><i class="fa-solid fa-trash text-[9px] text-[#CCFF00]"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.abaAtiva === 'usuarios') {
+                return `
+                    <div class="min-h-screen pt-4 animate-in">
+                        <div class="px-6 mb-8 max-w-md mx-auto">
+                            <div class="flex items-center gap-4 mb-8">
+                                <button onclick="setAba('home')" class="text-black text-2xl active:scale-90 transition-all mr-1">
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                </button>
+                                <h2 class="text-4xl font-black text-black uppercase italic">Usuários</h2>
+                            </div>
+                            
+                            <button onclick="openModalUsuario()" class="flex items-center gap-3 bg-white p-3 pr-6 rounded-full shadow-sm mb-8">
+                                <div class="w-10 h-10 rounded-full bg-[#CCFF00] flex items-center justify-center text-black"><i class="fa-solid fa-user-plus"></i></div>
+                                <span class="text-[10px] font-black uppercase text-black tracking-widest">Novo Usuário</span>
+                            </button>
+
+                            <div class="space-y-4">
+                                ${state.dados.usuarios.map(u => `
+                                    <div class="bg-white rounded-[32px] p-5 flex items-center justify-between shadow-sm border border-gray-100">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-12 h-12 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
+                                                ${u.thumbnail ? `<img src="${u.thumbnail}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-user text-gray-300"></i>`}
+                                            </div>
+                                            <div>
+                                                <h4 class="text-sm font-black text-black uppercase">${u.nome}</h4>
+                                                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Ativo</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <button onclick="editUsuario('${u.id}')" class="w-9 h-9 rounded-xl bg-black flex items-center justify-center"><i class="fa-solid fa-pen text-[9px] text-[#CCFF00]"></i></button>
+                                            <button onclick="confirmDeleteUsuario('${u.id}')" class="w-9 h-9 rounded-xl bg-black flex items-center justify-center"><i class="fa-solid fa-trash text-[9px] text-[#CCFF00]"></i></button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        window.setAba = (aba) => { state.abaAtiva = aba; state.modal = null; render(); };
+        window.changeMonth = (val) => { state.dataNavegacao.setMonth(state.dataNavegacao.getMonth() + val); render(); };
+        window.toggleSaldo = () => { state.verSaldo = !state.verSaldo; render(); };
+        window.setSemana = (n) => { 
+            if (n === 'all') state.semanasAtivas = [];
+            else {
+                const idx = state.semanasAtivas.indexOf(n);
+                if (idx > -1) state.semanasAtivas.splice(idx, 1);
+                else state.semanasAtivas.push(n);
+            }
+            render(); 
+        };
+        window.setFiltroStatus = (f) => { state.filtroStatus = f; render(); };
+        window.setFiltroOrdem = (o) => { state.filtroOrdem = o; render(); };
+        window.toggleFiltroDespesaDiaria = () => { 
+            state.filtroDespesaDiaria = !state.filtroDespesaDiaria; 
+            render(); 
+        };
+        window.closeModal = () => { state.modal = null; state.editando = null; state.tempImagem = null; state.passoLancamento = 'selecao'; state.itemSelecionadoId = ''; state.faturaFiltroIni = ''; state.faturaFiltroFim = ''; render(); };
+        window.openModalLancamento = () => { state.modal = 'lancamento'; state.passoLancamento = 'selecao'; render(); };
+        window.setLancamentoTipo = (tipo) => { 
+            state.tipoLancamento = tipo; 
+            state.passoLancamento = 'formulario'; 
+            if (tipo === 'despesa_diaria') {
+                state.catSelecionada = 'despesa_diaria';
+            }
+            render(); 
+        };
+        window.backLancamento = () => { if (state.editando) closeModal(); else { state.passoLancamento = 'selecao'; render(); } };
+        
+        window.updateItemSelection = (id) => { 
+            state.itemSelecionadoId = id; 
+            if (state.tipoLancamento === 'fixa') {
+                const f = state.dados.fixas.find(x => x.id === id);
+                if (f && f.imagem) state.tempImagem = f.imagem;
+                if (f && f.categoria) state.catSelecionada = f.categoria;
+            } else if (state.tipoLancamento === 'cartao') {
+                const c = state.dados.cartoes.find(x => x.id === id);
+                if (c && c.imagem) state.tempImagem = c.imagem; 
+                state.catSelecionada = 'cartao_credito';
+            }
+            render(); 
+        };
+
+        function renderItemConta(c, idx) {
+            const categoria = CATEGORIAS.find(cat => cat.id === c.categoria) || CATEGORIAS.find(cat => cat.id === 'outros');
+            const totalPago = (c.historicoPagamentos || []).reduce((a, b) => a + b.valor, 0);
+            const faltaPagar = c.pago ? totalPago : (c.valor - totalPago);
+            const isDespesaDiaria = c.tipo === 'despesa_diaria';
+            
+            return `
+                <div class="relative p-5 flex items-center justify-between hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? 'bg-[#CCFF00]/5' : 'bg-white'}">
+                    <div class="flex items-center gap-3 flex-1 ${c.pago ? 'opacity-30' : 'opacity-100'}">
+                        <div class="w-10 h-10 rounded-2xl flex-shrink-0 border border-gray-100 flex items-center justify-center bg-gray-50 overflow-hidden">
+                            ${c.imagem ? `<img src="${c.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${categoria.icone} text-black/20 text-xs"></i>`}
+                        </div>
+                        <div class="truncate">
+                            <div class="flex items-center gap-2">
+                                <h4 class="text-xs font-bold truncate text-gray-800">${c.nome}</h4>
+                                ${isDespesaDiaria ? `<span class="despesa-diaria-badge">Diária</span>` : ''}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <p class="text-[11px] font-black">R$ ${faltaPagar.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</p>
+                                <span class="text-[8px] font-black text-black/20 uppercase">${new Date(c.data + 'T12:00:00').toLocaleDateString('pt-br', { day: '2-digit', month: '2-digit' })}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-1.5 ml-2">
+                        <button onclick="openModalPagar('${c.id}')" class="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm ${c.pago ? 'bg-[#11C76F] text-white' : 'bg-[#CCFF00] text-black'} active:scale-90 transition-all"><i class="fa-solid ${c.pago ? 'fa-check-double' : 'fa-hand-holding-dollar'} text-[12px]"></i></button>
+                        <button onclick="editConta('${c.id}')" class="w-9 h-9 rounded-xl bg-black flex items-center justify-center shadow-sm active:scale-90 transition-all"><i class="fa-solid fa-pen text-[10px] text-[#CCFF00]"></i></button>
+                        <button onclick="confirmDelete('${c.id}', 'conta')" class="w-9 h-9 rounded-xl bg-black flex items-center justify-center shadow-sm active:scale-90 transition-all"><i class="fa-solid fa-trash text-[10px] text-[#CCFF00]"></i></button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFooter() {
+            return `
+                <div class="fixed bottom-8 left-6 right-6 z-[100]">
+                    <div class="bg-black/95 backdrop-blur-2xl rounded-[35px] py-4 px-6 flex justify-between items-center shadow-2xl border border-white/10">
+                        ${[
+                            { id: 'home', ic: 'house-chimney', label: 'Home' }, 
+                            { id: 'cartoes', ic: 'credit-card', label: 'Cartões' }, 
+                            { id: 'relatorios', ic: 'chart-pie', label: 'Relatórios' },
+                            { id: 'fixas', ic: 'house-lock', label: 'Fixas' },
+                            { id: 'gastos', ic: 'money-bill', label: 'Gastos' }
+                        ].map(b => `
+                            <button onclick="setAba('${b.id}')" class="flex flex-col items-center gap-1 transition-all ${state.abaAtiva === b.id ? 'opacity-100 scale-110' : 'opacity-40'}">
+                                <i class="fa-solid fa-${b.ic} text-lg ${state.abaAtiva === b.id ? 'text-[#CCFF00]' : 'text-gray-400'}"></i>
+                                <span class="text-[7px] font-black uppercase tracking-widest ${state.abaAtiva === b.id ? 'text-white' : 'text-gray-500'}">${b.label}</span>
+                            </button>
+                        `).join('')}
+                        <button onclick="openModalLancamento()" class="w-12 h-12 rounded-2xl bg-[#CCFF00] flex items-center justify-center text-black shadow-lg shadow-[#CCFF00]/20 active:scale-90 transition-all">
+                            <i class="fa-solid fa-plus text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderModais() {
+            if (!state.modal && !state.modalSubcategoria && !state.modalLancamentosSubcategoria) return '';
+
+            // Modal de Nova Subcategoria (CORRIGIDO)
+            if (state.modalSubcategoria) {
+                return `
+                    <div class="modal-subcategoria" onclick="if(event.target.classList.contains('modal-subcategoria')) closeModalSubcategoria()">
+                        <div class="modal-subcategoria-content animate-in">
+                            <div class="flex items-center justify-between mb-8">
+                                <h3 class="text-2xl font-black text-black">${state.editandoSubcategoria ? 'Editar' : 'Nova'} Subcategoria</h3>
+                                <button onclick="closeModalSubcategoria()" class="text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label class="text-[10px] font-black uppercase text-gray-400 mb-2 block">Nome da Subcategoria</label>
+                                <input type="text" 
+                                       id="nome-subcategoria"
+                                       value="${state.novaSubcategoria.nome}"
+                                       oninput="state.novaSubcategoria.nome = this.value"
+                                       placeholder="Ex: Transporte, Alimentação..."
+                                       class="input-light w-full text-lg font-bold" />
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label class="text-[10px] font-black uppercase text-gray-400 mb-2 block">Selecione um Ícone</label>
+                                <div class="grid-icones">
+                                    ${ICONES_SUBCATEGORIAS.map(icone => `
+                                        <div onclick="setIconeSubcategoria('${icone}')" 
+                                             class="icone-option ${state.novaSubcategoria.icone === icone ? 'selected' : ''}">
+                                            <i class="fa-solid ${icone}"></i>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <button onclick="salvarNovaSubcategoria()" class="btn-nova-subcategoria w-full">
+                                <i class="fa-solid fa-check"></i> ${state.editandoSubcategoria ? 'Atualizar' : 'Salvar'} Subcategoria
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Modal de Lançamentos da Subcategoria (mantido)
+            if (state.modalLancamentosSubcategoria) {
+                const subcategoria = state.subcategoriaSelecionada;
+                const lancamentos = state.dados.contas
+                    .filter(c => c.tipo === 'despesa_diaria' && c.subcategoriaId === subcategoria.id)
+                    .sort((a, b) => new Date(b.data) - new Date(a.data));
+                
+                return `
+                    <div class="modal-lancamentos-subcategoria" onclick="if(event.target.classList.contains('modal-lancamentos-subcategoria')) closeModalLancamentosSubcategoria()">
+                        <div class="modal-lancamentos-content animate-in">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xl font-black text-black">Lançamentos - ${subcategoria.nome}</h3>
+                                <button onclick="closeModalLancamentosSubcategoria()" class="text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <p class="text-gray-500 text-sm">Total de lançamentos: ${lancamentos.length}</p>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                ${lancamentos.length > 0 ? lancamentos.map(l => `
+                                    <div class="lancamento-item">
+                                        <div class="flex-1">
+                                            <h4 class="text-sm font-bold text-gray-800">${l.nome}</h4>
+                                            <p class="text-xs text-gray-500">${new Date(l.data + 'T12:00:00').toLocaleDateString('pt-br')}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-sm font-black text-gray-900">R$ ${l.valor.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</p>
+                                            <p class="text-xs text-gray-500">${l.pago ? 'Pago' : 'Pendente'}</p>
+                                        </div>
+                                    </div>
+                                `).join('') : `
+                                    <div class="empty-state">
+                                        <i class="fa-solid fa-receipt"></i>
+                                        <p class="text-[10px] font-black uppercase">Nenhum lançamento encontrado</p>
+                                    </div>
+                                `}
+                            </div>
+                            
+                            <button onclick="closeModalLancamentosSubcategoria()" class="w-full mt-6 py-3 bg-black text-white rounded-xl font-bold">Fechar</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.modal === 'usuario') {
+                return `
+                    <div class="fixed inset-0 bg-black/60 backdrop-blur-xl z-[900] flex items-end justify-center" onclick="if(event.target === this) closeModal()">
+                        <div class="w-full max-w-md p-8 bg-[#121212] rounded-t-[40px] border-t border-[#CCFF00]/40 animate-in max-h-[90vh] overflow-y-auto no-scrollbar">
+                            <div class="w-12 h-1 bg-white/10 rounded-full mx-auto mb-8"></div>
+                            <h3 class="text-white font-black uppercase text-center mb-10 text-xl tracking-widest italic">${state.editando ? 'Editar' : 'Novo'} Usuário</h3>
+                            <form onsubmit="handleSalvarUsuario(event)">
+                                <div class="flex flex-col items-center mb-10">
+                                    <button type="button" onclick="triggerFile('usuario')" class="w-24 h-24 rounded-full border border-white/10 flex items-center justify-center bg-black overflow-hidden relative group">
+                                        ${(state.tempImagem || state.editando?.thumbnail) ? `<img src="${state.tempImagem || state.editando?.thumbnail}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-camera text-white/10 text-2xl"></i>`}
+                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-active:opacity-100 flex items-center justify-center transition-all">
+                                            <i class="fa-solid fa-sync text-white text-xs"></i>
+                                        </div>
+                                    </button>
+                                    <input id="file-usuario" type="file" accept="image/*" class="hidden" onchange="processFile(event, 'tempImagem')">
+                                    <span class="text-[8px] font-black uppercase text-white/20 mt-3 tracking-widest">Toque para alterar imagem</span>
+                                </div>
+
+                                <div class="space-y-4 mb-10">
+                                    <div class="bg-black p-4 rounded-2xl border border-white/5">
+                                        <span class="text-[8px] text-white/40 font-black uppercase block mb-1">Nome de Usuário</span>
+                                        <input name="nome" placeholder="Ex: Marcelo" value="${state.editando?.nome || ''}" class="bg-transparent text-white font-black text-lg outline-none w-full" required />
+                                    </div>
+                                    <div class="bg-black p-4 rounded-2xl border border-white/5">
+                                        <span class="text-[8px] text-white/40 font-black uppercase block mb-1">Senha de Acesso</span>
+                                        <input name="senha" type="password" placeholder="****" value="${state.editando?.senha || ''}" class="bg-transparent text-white font-black text-lg outline-none w-full" required />
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="w-full py-5 rounded-3xl bg-[#CCFF00] text-black font-black uppercase tracking-[0.2em] text-[11px] active:scale-95 transition-all">Salvar Usuário</button>
+                                <button type="button" onclick="closeModal()" class="w-full mt-4 py-3 text-white/20 font-black uppercase text-[9px] tracking-[0.3em]">Cancelar</button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.modal === 'notificacoes') {
+                const vencidas = getContasVencidas();
+                const esquecimento = state.notificacoesVerificar;
+                
+                return `
+                    <div class="fixed inset-0 bg-black/60 backdrop-blur-xl z-[900] flex items-end justify-center" onclick="if(event.target === this) closeModal()">
+                        <div class="w-full max-w-md p-8 bg-[#121212] rounded-t-[40px] border-t border-[#CCFF00]/40 animate-in max-h-[80vh] overflow-y-auto no-scrollbar">
+                            <div class="w-12 h-1 bg-white/10 rounded-full mx-auto mb-8"></div>
+                            <h3 class="text-white font-black uppercase text-center mb-6 text-xl tracking-widest italic">Notificações</h3>
+                            
+                            <div class="notification-tabs">
+                                <div class="notification-tab ${state.notificacaoAba === 'vencidas' ? 'active' : ''}" onclick="setNotificacaoAba('vencidas')">
+                                    Vencidas (${vencidas.length})
+                                </div>
+                                <div class="notification-tab ${state.notificacaoAba === 'verificar' ? 'active' : ''}" onclick="setNotificacaoAba('verificar')">
+                                    Verificar (${esquecimento.length})
+                                </div>
+                            </div>
+                            
+                            ${state.notificacaoAba === 'vencidas' ? `
+                                <div class="space-y-4">
+                                    ${vencidas.length > 0 ? vencidas.map(c => `
+                                        <div class="notification-item notification-item-vencida">
+                                            <div class="notification-thumb" style="background: ${CATEGORIAS.find(cat => cat.id === c.categoria)?.cor || '#666'}">
+                                                ${c.imagem ? `<img src="${c.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${CATEGORIAS.find(cat => cat.id === c.categoria)?.icone || 'fa-receipt'} text-white"></i>`}
+                                            </div>
+                                            <div class="notification-content">
+                                                <div class="notification-title">${c.nome}</div>
+                                                <div class="notification-subtitle">Vencido em: ${new Date(c.data + 'T12:00:00').toLocaleDateString('pt-br')}</div>
+                                            </div>
+                                            <button onclick="closeModal(); setTimeout(() => openModalPagar('${c.id}'), 100)" 
+                                                    class="px-4 py-2 rounded-xl bg-[#CCFF00] text-black font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">
+                                                Pagar
+                                            </button>
+                                        </div>
+                                    `).join('') : `
+                                        <div class="py-12 text-center">
+                                            <i class="fa-solid fa-check-circle text-4xl text-white/10 mb-4"></i>
+                                            <p class="text-white/40 font-black uppercase text-[10px]">Nenhuma conta vencida</p>
+                                        </div>
+                                    `}
+                                </div>
+                            ` : `
+                                <div class="space-y-4">
+                                    <div class="verificar-header">
+                                        <div class="verificar-month-selector">
+                                            <button onclick="setVerificarMes(-1)" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white active:scale-95">
+                                                <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                                            </button>
+                                            <div class="verificar-month-display">
+                                                ${new Date(state.verificarAno, state.verificarMes).toLocaleDateString('pt-br', { month: 'long', year: 'numeric' })}
+                                            </div>
+                                            <button onclick="setVerificarMes(1)" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white active:scale-95">
+                                                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                                            </button>
+                                        </div>
+                                        <div class="verificar-button" onclick="verificarLancamentos()">
+                                            Verificar lançamentos
+                                        </div>
+                                    </div>
+                                    
+                                    ${esquecimento.length > 0 ? esquecimento.map(n => `
+                                        <div class="notification-item notification-item-esquecimento">
+                                            <div class="notification-thumb" style="background: ${n.cor}">
+                                                ${n.imagem ? `<img src="${n.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${n.origem === 'cartao' ? 'fa-credit-card' : 'fa-house-chimney'} text-white"></i>`}
+                                            </div>
+                                            <div class="notification-content">
+                                                <div class="notification-title">${n.nome}</div>
+                                                <div class="notification-subtitle">${n.mensagem}</div>
+                                            </div>
+                                            <button onclick="closeModal(); setTimeout(() => ${n.origem === 'cartao' ? 'openFaturas' : 'openFaturasFixas'}('${n.id}'), 100)" 
+                                                    class="px-3 py-2 rounded-xl bg-white/10 text-white font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all">
+                                                Ver
+                                            </button>
+                                        </div>
+                                    `).join('') : `
+                                        <div class="py-12 text-center">
+                                            <i class="fa-solid fa-magnifying-glass text-4xl text-white/10 mb-4"></i>
+                                            <p class="text-white/40 font-black uppercase text-[10px]">Clique em "Verificar lançamentos"</p>
+                                            <p class="text-white/20 text-[8px] mt-2">Para buscar contas fixas e cartões sem lançamento no mês selecionado</p>
+                                        </div>
+                                    `}
+                                </div>
+                            `}
+
+                            <button onclick="closeModal()" class="w-full mt-12 py-5 rounded-3xl bg-white/5 text-white/40 font-black uppercase tracking-[0.2em] text-[11px] active:bg-white/10">Fechar</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.modal === 'lancamento') {
+                if (state.passoLancamento === 'selecao') {
+                    return `
+                        <div class="fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
+                            <div class="w-full max-w-sm bg-[#1A1A1A] rounded-[32px] border border-[#CCFF00]/30 p-6 animate-in">
+                                <div class="text-center py-4">
+                                    <div class="w-14 h-14 bg-[#CCFF00] rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(204,255,0,0.3)]"><i class="fa-solid fa-plus text-black text-xl"></i></div>
+                                    <h2 class="text-[#CCFF00] font-black uppercase text-xs tracking-widest mb-8 italic">Novo Lançamento</h2>
+                                    <div class="space-y-3">
+                                        <button onclick="setLancamentoTipo('conta')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Variável / Eventual</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
+                                        <button onclick="setLancamentoTipo('fixa')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Conta Fixa Salva</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
+                                        <button onclick="setLancamentoTipo('cartao')" class="w-full py-4 rounded-2xl bg-black border border-[#CCFF00]/20 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Cartão de Crédito</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
+                                        <button onclick="setLancamentoTipo('despesa_diaria')" class="w-full py-4 rounded-2xl bg-[#4CAF50] border border-[#4CAF50] text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-between px-6 active:scale-95 transition-all"><span>Despesa Diária</span> <i class="fa-solid fa-chevron-right text-[8px] opacity-40"></i></button>
+                                    </div>
+                                    <button onclick="closeModal()" class="mt-8 text-white/40 font-black uppercase text-[8px] tracking-[0.3em]">Cancelar</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (state.passoLancamento === 'formulario') {
+                    const getDataSugerida = () => {
+                        if (state.editando) {
+                            return state.editando.data;
+                        }
+                        
+                        const hoje = new Date();
+                        const ano = hoje.getFullYear();
+                        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+                        
+                        if (state.tipoLancamento === 'cartao' && state.itemSelecionadoId) {
+                            const cartao = state.dados.cartoes.find(x => x.id === state.itemSelecionadoId);
+                            const dia = String(cartao?.diaFatura || hoje.getDate()).padStart(2, '0');
+                            return `${ano}-${mes}-${dia}`;
+                        } else if (state.tipoLancamento === 'fixa' && state.itemSelecionadoId) {
+                            const fixa = state.dados.fixas.find(x => x.id === state.itemSelecionadoId);
+                            const dia = String(fixa?.diaVencimento || hoje.getDate()).padStart(2, '0');
+                            return `${ano}-${mes}-${dia}`;
+                        } else {
+                            const dia = String(hoje.getDate()).padStart(2, '0');
+                            return `${ano}-${mes}-${dia}`;
+                        }
+                    };
+
+                    const dataSugerida = getDataSugerida();
+                    
+                    if (state.tipoLancamento === 'despesa_diaria') {
+                        return `
+                            <div class="fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
+                                <div class="w-full max-w-sm bg-[#1A1A1A] rounded-[32px] border border-[#4CAF50]/30 p-6 animate-in">
+                                    <form onsubmit="handleSalvarDespesaDiaria(event)" class="space-y-6">
+                                        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                                            <button type="button" onclick="backLancamento()" class="text-[#4CAF50]"><i class="fa-solid fa-arrow-left"></i></button>
+                                            <span class="text-white font-black uppercase text-[10px] tracking-widest">DESPESA DIÁRIA</span>
+                                            <div class="w-4"></div>
+                                        </div>
+                                        <div class="space-y-4">
+                                            <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Descrição</span>
+                                                <input name="descricao" type="text" placeholder="Descrição da despesa" value="${state.editando?.descricao || state.editando?.nome || ''}" class="w-full bg-transparent text-white font-black text-lg outline-none" required />
+                                            </div>
+                                            
+                                            <div class="grid grid-cols-12 gap-2">
+                                                <div class="col-span-6 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                    <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Valor</span>
+                                                    <div class="flex items-center gap-1">
+                                                        <span class="text-[10px] text-[#4CAF50] font-bold">R$</span>
+                                                        <input name="valor" type="number" step="0.01" placeholder="0,00" value="${state.editando?.valor || ''}" class="bg-transparent text-[#4CAF50] w-full font-black text-lg outline-none" required />
+                                                    </div>
+                                                </div>
+                                                <div class="col-span-6 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                    <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Data</span>
+                                                    <input name="data" type="date" value="${dataSugerida}" class="dark-date-input" required />
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Subcategoria</span>
+                                                <select name="subcategoriaId" class="w-full bg-transparent text-white font-black text-[12px] outline-none" required>
+                                                    <option value="">Selecione uma subcategoria</option>
+                                                    ${state.dados.subcategoriasGastos.map(sub => `
+                                                        <option value="${sub.id}" ${state.editando?.subcategoriaId === sub.id ? 'selected' : ''}>${sub.nome}</option>
+                                                    `).join('')}
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Categoria (BLOQUEADA)</span>
+                                                <div class="flex items-center gap-2">
+                                                    <div class="w-6 h-6 rounded-full bg-[#4CAF50] flex items-center justify-center">
+                                                        <i class="fa-solid fa-calendar-day text-[10px] text-white"></i>
+                                                    </div>
+                                                    <span class="text-[#4CAF50] font-bold text-[10px] uppercase">Despesa Diária</span>
+                                                    <input type="hidden" name="categoria" value="despesa_diaria" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="w-full py-4 rounded-2xl bg-[#4CAF50] text-black font-black uppercase tracking-[0.2em] text-[11px] shadow-lg active:scale-95 transition-all">Salvar Despesa Diária</button>
+                                    </form>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    return `
+                        <div class="fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeModal()">
+                            <div class="w-full max-w-sm bg-[#1A1A1A] rounded-[32px] border border-[#CCFF00]/30 p-6 animate-in">
+                                <form onsubmit="handleSalvarConta(event)" class="space-y-6">
+                                    <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                                        <button type="button" onclick="backLancamento()" class="text-[#CCFF00]"><i class="fa-solid fa-arrow-left"></i></button>
+                                        <span class="text-white font-black uppercase text-[10px] tracking-widest">${state.tipoLancamento.toUpperCase()}</span>
+                                        <div class="w-4"></div>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <div class="flex items-center gap-3">
+                                            <button type="button" onclick="triggerFile('main')" class="w-16 h-16 rounded-2xl bg-black border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                ${(state.tempImagem || state.editando?.imagem) ? `<img src="${state.tempImagem || state.editando?.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid fa-camera text-white/10"></i>`}
+                                            </button>
+                                            <input id="file-main" type="file" accept="image/*" class="hidden" onchange="processFile(event, 'tempImagem')">
+                                            <div class="flex-1">
+                                                ${state.tipoLancamento === 'conta' ? `<input name="nome" type="text" placeholder="Nome do lançamento" value="${state.editando?.nome || ''}" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required />` : `<select name="itemId" class="w-full bg-black text-white px-4 py-4 rounded-xl border border-white/10 outline-none text-xs font-bold" required onchange="updateItemSelection(this.value)"><option value="">Selecione...</option>${(state.tipoLancamento === 'cartao' ? state.dados.cartoes : state.dados.fixas).map(item => `<option value="${item.id}" ${state.itemSelecionadoId === item.id ? 'selected' : ''}>${state.tipoLancamento === 'cartao' ? item.banco : item.nome}</option>`).join('')}</select>`}
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-12 gap-2">
+                                            <div class="col-span-6 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Valor</span>
+                                                <div class="flex items-center gap-1">
+                                                    <span class="text-[10px] text-[#CCFF00] font-bold">R$</span>
+                                                    <input name="valor" type="number" step="0.01" placeholder="0,00" value="${state.editando?.valor || ''}" class="bg-transparent text-[#CCFF00] w-full font-black text-lg outline-none" required />
+                                                </div>
+                                            </div>
+                                            <div class="col-span-4 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Data</span>
+                                                <input name="data" type="date" value="${dataSugerida}" class="dark-date-input" required />
+                                            </div>
+                                            <div class="col-span-2 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                                <span class="text-[7px] text-white/40 uppercase font-black block mb-1">Repetir</span>
+                                                <input name="repetir" type="number" min="1" max="24" value="${state.editando ? '1' : '1'}" class="bg-transparent text-white font-black text-lg outline-none w-full" />
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-3 gap-2 max-h-[120px] overflow-y-auto no-scrollbar">
+                                            ${CATEGORIAS.filter(cat => cat.id !== 'despesa_diaria').map(cat => `
+                                                <button type="button" onclick="setCat('${cat.id}')" class="flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all ${state.catSelecionada === cat.id ? 'bg-[#CCFF00] border-[#CCFF00] text-black' : 'bg-black/40 border-white/5 text-white/40'}">
+                                                    <i class="fa-solid ${cat.icone} text-[10px]"></i>
+                                                    <span class="text-[7px] font-black uppercase text-center">${cat.nome}</span>
+                                                </button>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="w-full py-4 rounded-2xl bg-[#CCFF00] text-black font-black uppercase tracking-[0.2em] text-[11px] shadow-lg active:scale-95 transition-all">Salvar Registro</button>
+                                </form>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            if (state.modal === 'cartao' || state.modal === 'fixa') {
+                const isFixa = state.modal === 'fixa';
+                const editando = state.editando || {};
+                
+                return `
+                    <div class="fixed inset-0 bg-black/60 backdrop-blur-xl z-[700] flex items-end justify-center" onclick="if(event.target === this) closeModal()">
+                        <div class="w-full max-w-md p-8 bg-[#121212] rounded-t-[40px] border-t border-[#CCFF00]/40 animate-in max-h-[90vh] overflow-y-auto no-scrollbar">
+                            <div class="w-12 h-1 bg-white/10 rounded-full mx-auto mb-8"></div>
+                            <h3 class="text-white font-black uppercase text-center mb-10 text-xl tracking-widest italic">${state.editando ? 'Editar' : 'Novo'} ${isFixa ? 'Fixa' : 'Cartão'}</h3>
+                            <form onsubmit="${isFixa ? 'handleSalvarFixa(event)' : 'handleSalvarCartao(event)'}">
+                                <div class="flex gap-4 mb-8">
+                                    <button type="button" onclick="triggerFile('${state.modal}')" class="w-20 h-20 rounded-2xl border border-white/10 flex items-center justify-center bg-black overflow-hidden flex-shrink-0">
+                                        ${(state.tempImagem || editando.imagem) ? `<img src="${state.tempImagem || editando.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid fa-camera text-white/10 text-xl"></i>`}
+                                    </button>
+                                    <input id="file-${state.modal}" type="file" accept="image/*" class="hidden" onchange="processFile(event, 'tempImagem')">
+                                    <div class="flex-1 space-y-3">
+                                        <input name="${isFixa ? 'nome' : 'banco'}" placeholder="${isFixa ? 'Nome da Conta' : 'Banco?'}" value="${editando[isFixa ? 'nome' : 'banco'] || ''}" class="w-full bg-black text-white p-4 rounded-2xl border border-white/10 outline-none text-sm font-bold focus:border-[#CCFF00]" required />
+                                        ${!isFixa ? `<input name="titular" placeholder="Titular" value="${editando.titular || ''}" class="w-full bg-black text-white p-4 rounded-2xl border border-white/10 outline-none text-sm font-bold focus:border-[#CCFF00]" required />` : ''}
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 mb-8">
+                                    <div class="bg-black p-4 rounded-2xl border border-white/5"><span class="text-[8px] text-white/40 font-black uppercase block mb-1">Dia Venc.</span><input name="${isFixa ? 'diaVencimento' : 'diaFatura'}" type="number" min="1" max="31" value="${editando[isFixa ? 'diaVencimento' : 'diaFatura'] || 5}" class="bg-transparent text-white font-black text-xl outline-none w-full" required /></div>
+                                    <div class="bg-black p-4 rounded-2xl border border-white/5">
+                                        <span class="text-[8px] text-white/40 font-black uppercase block mb-1">Setor / Categoria</span>
+                                        <select name="categoria" class="bg-transparent text-[#CCFF00] font-black text-[10px] outline-none w-full uppercase">
+                                            ${CATEGORIAS.filter(cat => cat.id !== 'despesa_diaria').map(cat => `<option value="${cat.id}" class="bg-black" ${(editando.categoria === cat.id || (!state.editando && !isFixa && cat.id === 'cartao_credito')) ? 'selected' : ''}>${cat.nome}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-black p-4 rounded-2xl border border-white/5 mb-8">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <span class="text-[8px] text-white/60 font-black uppercase block mb-1">Deseja lembrar se faltar lançamento?</span>
+                                            <span class="text-[7px] text-white/40 block">Avisar se não houver lançamento no mês selecionado</span>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" name="lembrarSemLancamento" ${editando.lembrarSemLancamento ? 'checked' : ''}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                ${!isFixa ? `
+                                    <div class="bg-black p-4 rounded-2xl border border-white/5 mb-8"><span class="text-[8px] text-white/40 font-black uppercase block mb-1">Estilo do Cartão</span><div class="flex gap-2">${CORES_ESTILO.map(c => `<div onclick="setCorCartao('${c.id}')" class="w-6 h-6 rounded-full border-2 ${state.corSelecionada?.id === c.id ? 'border-[#CCFF00]' : 'border-transparent'}" style="background-color: ${c.hex}"></div>`).join('')}</div></div>
+                                ` : ''}
+                                <button type="submit" class="w-full py-5 rounded-3xl bg-[#CCFF00] text-black font-black uppercase tracking-[0.2em] text-[11px]">Salvar Cadastro</button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.modal === 'faturas') {
+                const item = state.editando;
+                const isFixa = !!item.diaVencimento; 
+                const info = calculateFaturasInfo(isFixa);
+                const color = isFixa ? '#000' : (item.cor?.hex || '#111');
+                
+                return `
+                    <div class="fixed inset-0 bg-white z-[600] overflow-y-auto no-scrollbar animate-in">
+                        <div class="w-full py-8 px-6 mb-6 flex items-center gap-6 sticky top-0 z-10" style="background-color: ${color}">
+                            <button onclick="closeModal()" class="text-white active:scale-90"><i class="fa-solid fa-arrow-left text-xl"></i></button>
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center overflow-hidden">
+                                     ${item.imagem ? `<img src="${item.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${isFixa ? 'fa-house-lock' : 'fa-credit-card'} text-white"></i>`}
+                                </div>
+                                <div>
+                                    <h3 class="text-white font-black uppercase text-xl tracking-tighter">${item.banco || item.nome}</h3>
+                                    <p class="text-white/50 text-[9px] font-black uppercase tracking-widest">${isFixa ? 'Lista de Faturas / Histórico' : 'Lançamentos do Cartão'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="px-6 max-w-2xl mx-auto">
+                            <div class="bg-gray-50 rounded-[32px] p-5 mb-8 border border-gray-100 space-y-3">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="text-[8px] font-black uppercase text-gray-400 mb-1 block">Início</label>
+                                        <input id="fatura-data-ini" type="date" value="${state.faturaFiltroIni}" class="input-light w-full" />
+                                    </div>
+                                    <div>
+                                        <label class="text-[8px] font-black uppercase text-gray-400 mb-1 block">Fim</label>
+                                        <input id="fatura-data-fim" type="date" value="${state.faturaFiltroFim}" class="input-light w-full" />
+                                    </div>
+                                </div>
+                                <button onclick="aplicarFiltroFaturas()" class="w-full py-3 bg-black text-[#CCFF00] rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">OK - Filtrar</button>
+                            </div>
+
+                            <div class="mb-8 p-6 bg-black rounded-[32px] text-white flex justify-between items-center shadow-xl">
+                                <div><span class="text-[9px] font-black uppercase text-[#CCFF00] block mb-1">Total Geral</span><p class="text-2xl font-black">R$ ${info.totalGeral.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</p></div>
+                                <div class="text-right"><span class="text-[9px] font-black uppercase text-white/40 block mb-1">Registros</span><p class="text-xl font-black">${info.qtdItens}</p></div>
+                            </div>
+
+                            <div class="w-full mb-12 space-y-2">
+                                ${info.agrupado.map((grupo, gIdx) => `
+                                    <div class="rounded-3xl border border-gray-100 overflow-hidden">
+                                        <div onclick="toggleExpandFatura('${grupo.mes}')" class="flex items-center justify-between py-4 px-5 bg-white cursor-pointer active:bg-gray-50">
+                                            <div class="flex items-center gap-3">
+                                                <i class="fa-solid fa-calendar-check text-[10px] text-gray-300"></i>
+                                                <span class="text-xs font-black text-gray-700 capitalize">${new Date(grupo.mes + '-01T12:00:00').toLocaleDateString('pt-br', { month: 'long', year: 'numeric' })}</span>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <span class="text-sm font-black text-gray-900">R$ ${grupo.total.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                                <i class="fa-solid fa-chevron-down text-[8px] text-gray-300"></i>
+                                            </div>
+                                        </div>
+                                        <div id="fatura-detalhe-${grupo.mes}" class="hidden bg-gray-50/50 px-5 py-2 border-t border-gray-50">
+                                            ${grupo.itens.map(item => `
+                                                <div class="flex justify-between items-center py-3 border-b border-gray-100 last:border-0">
+                                                    <div>
+                                                        <span class="text-[10px] font-bold text-gray-700 block">${item.nome}</span>
+                                                        <span class="text-[8px] text-white/40 uppercase">Venc: ${new Date(item.data + 'T12:00:00').toLocaleDateString('pt-br')} | ${item.pago ? 'PAGO' : 'PENDENTE'}</span>
+                                                    </div>
+                                                    <div class="flex items-center gap-3">
+                                                        <span class="text-[10px] font-black text-gray-900">R$ ${item.valor.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                                        <button onclick="editContaFromModal('${item.id}')" class="w-7 h-7 bg-black rounded-lg flex items-center justify-center text-[#CCFF00]"><i class="fa-solid fa-pen text-[7px]"></i></button>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.modal === 'pagar') {
+                const item = state.editando;
+                const totalPago = (item.historicoPagamentos || []).reduce((a,b)=>a+b.valor,0);
+                const falta = Math.max(0, item.valor - totalPago);
+                
+                return `
+                    <div class="fixed inset-0 bg-black/60 backdrop-blur-xl z-[800] flex items-end justify-center" onclick="if(event.target === this) closeModal()">
+                        <div class="w-full max-w-md p-6 pb-12 bg-[#121212] rounded-t-[40px] border-t border-[#CCFF00]/40 animate-in overflow-y-auto max-h-[95vh] no-scrollbar">
+                            <div class="w-12 h-1 bg-white/10 rounded-full mx-auto mb-6"></div>
+                            <div class="flex items-center gap-4 mb-8">
+                                <div class="w-14 h-14 rounded-2xl border border-white/5 bg-black overflow-hidden flex items-center justify-center">
+                                    ${item.imagem ? `<img src="${item.imagem}" class="w-full h-full object-cover" />` : `<i class="fa-solid ${CATEGORIAS.find(cat => cat.id === item.categoria)?.icone || 'fa-receipt'} text-[#CCFF00]"></i>`}
+                                </div>
+                                <div>
+                                    <span class="text-[#CCFF00] font-black uppercase text-[10px] tracking-widest italic">${item.pago ? 'Conta Liquidada' : 'Lançar Pagamento'}</span>
+                                    <h3 class="text-white font-black text-base truncate">${item.nome}</h3>
+                                </div>
+                            </div>
+
+                            ${!item.pago ? `
+                                <div class="grid grid-cols-5 gap-3 mb-8">
+                                    <div class="col-span-2 bg-white/5 p-4 rounded-2xl border border-white/5">
+                                        <span class="text-white/40 text-[8px] font-black uppercase">Falta</span>
+                                        <span class="text-white font-black text-lg">R$ ${falta.toLocaleString('pt-br', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div class="col-span-3 bg-black rounded-2xl border-2 border-[#CCFF00] p-4">
+                                        <span class="text-[#CCFF00] text-[8px] font-black uppercase">Valor Pago Agora</span>
+                                        <input id="pagamento-input" type="number" step="0.01" placeholder="${falta.toFixed(2)}" class="bg-transparent text-white w-full font-black text-2xl outline-none" oninput="togglePagarBtn(this.value)" />
+                                    </div>
+                                </div>
+                                <button id="btn-confirmar-pagamento" onclick="handleConfirmarPagamento()" disabled class="w-full py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] bg-white/5 text-white/10 transition-all">Confirmar Pagamento</button>
+                            ` : ''}
+
+                            <div class="mt-8">
+                                <h4 class="text-white/40 text-[9px] font-black uppercase mb-4 tracking-widest">Histórico</h4>
+                                <div class="space-y-2">
+                                    ${(item.historicoPagamentos || []).map(p => `
+                                        <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5">
+                                            <div>
+                                                <span class="text-[10px] font-bold text-white block">R$ ${p.valor.toLocaleString('pt-br')}</span>
+                                                <span class="text-[8px] text-white/30 uppercase">${new Date(p.data).toLocaleDateString('pt-br')}</span>
+                                            </div>
+                                            <button onclick="excluirPagamentoParcial('${p.id}')" class="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center active:scale-90"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <button onclick="closeModal()" class="w-full mt-10 py-3 text-white/20 font-black uppercase text-[9px] tracking-[0.3em]">Fechar</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (state.modal === 'excluir') {
+                return `
+                    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-6 animate-in">
+                        <div class="w-full max-w-[280px] aspect-square bg-black border border-[#CCFF00] rounded-[32px] flex flex-col items-center justify-center p-6 shadow-[0_0_50px_rgba(204,255,0,0.2)]">
+                            <div class="w-16 h-16 rounded-full flex items-center justify-center mb-4 text-[#CCFF00]">
+                                <i class="fa-solid fa-circle-question text-5xl"></i>
+                            </div>
+                            
+                            <h3 class="text-[#CCFF00] font-black text-[13px] uppercase tracking-widest text-center leading-tight mb-8">
+                                Deseja realmente excluir este lançamento?
+                            </h3>
+
+                            <div class="w-full space-y-3">
+                                <button onclick="handleConfirmExcluir()" class="w-full py-4 bg-[#CCFF00] text-black font-black uppercase text-[10px] tracking-widest rounded-2xl active:scale-95 transition-all">
+                                    Sim, Excluir
+                                </button>
+                                <button onclick="closeModal()" class="w-full py-4 text-white/40 font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderFeedback() {
+            if (!state.feedback.ativo) return '';
+            return `
+                <div class="fixed inset-0 bg-black/90 z-[1000] flex items-center justify-center p-10 backdrop-blur-md">
+                    <div class="bg-[#1A1A1A] w-full max-sm rounded-[45px] p-10 border border-[#CCFF00]/30 text-center animate-in">
+                        <div class="w-20 h-20 bg-[#CCFF00] rounded-full flex items-center justify-center mb-8 mx-auto"><i class="fa-solid fa-check text-black text-3xl"></i></div>
+                        <h4 class="text-[#CCFF00] font-black uppercase text-xs tracking-widest mb-4">Sucesso!</h4>
+                        <p class="text-white/50 text-xs italic">"${state.feedback.frase}"</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function calculateStats() {
+            let filtrada = (state.dados.contas || []).filter(c => {
+                const d = new Date(c.data + 'T12:00:00');
+                return d.getMonth() === state.dataNavegacao.getMonth() && d.getFullYear() === state.dataNavegacao.getFullYear();
+            });
+            
+            if (state.filtroDespesaDiaria) {
+                filtrada = filtrada.filter(c => c.tipo === 'despesa_diaria');
+            } else {
+                filtrada = filtrada.filter(c => c.tipo !== 'despesa_diaria');
+            }
+            
+            if (state.semanasAtivas.length) {
+                filtrada = filtrada.filter(c => {
+                    return state.semanasAtivas.includes(getSemana2026(c.data));
+                });
+            }
+            
+            const proc = filtrada.map(c => {
+                const pago = (c.historicoPagamentos || []).reduce((a, b) => a + b.valor, 0);
+                return { ...c, totalPago: pago, faltaPagar: Math.max(0, c.valor - pago) };
+            });
+            let listaFinal = [...proc];
+            if (state.filtroStatus === 'pagos') listaFinal = listaFinal.filter(c => c.pago);
+            if (state.filtroStatus === 'pendentes') listaFinal = listaFinal.filter(c => !c.pago);
+            
+            if (state.filtroOrdem === 'valor') {
+                listaFinal.sort((a, b) => b.faltaPagar - a.faltaPagar);
+            } else {
+                listaFinal.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+            }
+
+            return {
+                lista: listaFinal,
+                pendente: proc.reduce((a, b) => a + b.faltaPagar, 0),
+                pago: proc.reduce((a, b) => a + b.totalPago, 0),
+                qtd: proc.length
+            };
+        }
+
+        function calculateFaturasInfo(isFixa) {
+            const item = state.editando;
+            let filtradas = state.dados.contas.filter(c => isFixa ? c.fixaId === item.id : c.cartaoId === item.id);
+            if (state.faturaFiltroIni && state.faturaFiltroFim) {
+                filtradas = filtradas.filter(c => c.data >= state.faturaFiltroIni && c.data <= state.faturaFiltroFim);
+            }
+            const totalGeral = filtradas.reduce((a, b) => a + b.valor, 0);
+            const agrupado = filtradas.reduce((acc, c) => {
+                const mesKey = c.data.substring(0, 7);
+                if (!acc[mesKey]) acc[mesKey] = { mes: mesKey, total: 0, itens: [] };
+                acc[mesKey].total += c.valor;
+                acc[mesKey].itens.push(c);
+                return acc;
+            }, {});
+            return { agrupado: Object.values(agrupado).sort((a, b) => b.mes.localeCompare(a.mes)), totalGeral, qtdItens: filtradas.length };
+        }
+
+        window.setCat = (id) => { state.catSelecionada = id; render(); };
+        window.toggleExpandFatura = (id) => { const el = document.getElementById(`fatura-detalhe-${id}`); if(el) el.classList.toggle('hidden'); }
+        window.openFaturas = (id) => { state.editando = state.dados.cartoes.find(x => x.id === id); state.modal = 'faturas'; render(); };
+        window.openFaturasFixas = (id) => { state.editando = state.dados.fixas.find(x => x.id === id); state.modal = 'faturas'; render(); };
+
+        window.aplicarFiltroFaturas = () => {
+            state.faturaFiltroIni = document.getElementById('fatura-data-ini').value;
+            state.faturaFiltroFim = document.getElementById('fatura-data-fim').value;
+            render();
+        };
+
+        window.handleSalvarConta = async (e) => {
+            e.preventDefault();
+            const f = new FormData(e.target);
+            const repetir = Math.min(parseInt(f.get('repetir')) || 1, 24);
+            const valor = parseFloat(f.get('valor'));
+            const dataInput = f.get('data');
+            let nomeBase = ""; let imagem = state.tempImagem || state.editando?.imagem; 
+            let categoria = state.catSelecionada;
+            let pago = state.editando?.pago || false;
+            let historicoPagamentos = state.editando?.historicoPagamentos || [];
+            
+            if (state.tipoLancamento === 'conta') {
+                nomeBase = f.get('nome');
+            } else if (state.tipoLancamento === 'cartao') {
+                const obj = state.dados.cartoes.find(c => c.id === state.itemSelecionadoId);
+                nomeBase = `Fatura ${obj.banco}`;
+                imagem = obj.imagem; categoria = obj.categoria || 'cartao_credito';
+            } else if (state.tipoLancamento === 'fixa') {
+                const obj = state.dados.fixas.find(fx => fx.id === state.itemSelecionadoId);
+                nomeBase = obj.nome;
+                imagem = obj.imagem; categoria = obj.categoria || 'casa';
+            }
+            
+            let novas = [...state.dados.contas];
+            if (state.editando) novas = novas.filter(x => x.id !== state.editando.id);
+            const baseId = Date.now();
+            
+            for (let i = 0; i < repetir; i++) {
+                const d = new Date(dataInput + 'T12:00:00');
+                d.setMonth(d.getMonth() + i);
+                const dataFormatada = d.toISOString().split('T')[0];
+                
+                novas.push({
+                    id: `${baseId}-${i}`,
+                    nome: repetir > 1 ? `${nomeBase} (${i+1}/${repetir})` : nomeBase,
+                    valor, 
+                    data: dataFormatada,
+                    pago: pago,
+                    historicoPagamentos: historicoPagamentos,
+                    categoria, 
+                    imagem, 
+                    tipo: state.tipoLancamento,
+                    cartaoId: state.tipoLancamento === 'cartao' ? state.itemSelecionadoId : null,
+                    fixaId: state.tipoLancamento === 'fixa' ? state.itemSelecionadoId : null
+                });
+            }
+            
+            state.dados.contas = novas;
+            closeModal(); 
+            await salvarFirebase();
+        };
+
+        window.handleSalvarDespesaDiaria = async (e) => {
+            e.preventDefault();
+            const f = new FormData(e.target);
+            const valor = parseFloat(f.get('valor'));
+            const dataInput = f.get('data');
+            const descricao = f.get('descricao');
+            const subcategoriaId = f.get('subcategoriaId');
+            
+            if (!subcategoriaId) {
+                alert("Selecione uma subcategoria!");
+                return;
+            }
+            
+            let novas = [...state.dados.contas];
+            if (state.editando) novas = novas.filter(x => x.id !== state.editando.id);
+            
+            const novaDespesa = {
+                id: state.editando?.id || Date.now().toString(),
+                nome: descricao,
+                descricao: descricao,
+                valor, 
+                data: dataInput,
+                pago: true,
+                historicoPagamentos: [{ id: Date.now().toString(), valor, data: new Date().toISOString() }],
+                categoria: 'despesa_diaria',
+                subcategoriaId: subcategoriaId,
+                imagem: null,
+                tipo: 'despesa_diaria',
+                cartaoId: null,
+                fixaId: null
+            };
+            
+            novas.push(novaDespesa);
+            state.dados.contas = novas;
+            
+            state.feedback = { ativo: true, frase: "Despesa diária registrada com sucesso!" };
+            render();
+            await salvarFirebase();
+            
+            setTimeout(() => { 
+                state.feedback.ativo = false; 
+                closeModal();
+                render();
+            }, 1500);
+        };
+
+        window.openModalPagar = (id) => { state.editando = state.dados.contas.find(x => x.id === id); state.modal = 'pagar'; render(); };
+        window.togglePagarBtn = (val) => {
+            const btn = document.getElementById('btn-confirmar-pagamento');
+            if (parseFloat(val) > 0) { btn.disabled = false; btn.classList.replace('bg-white/5', 'bg-[#CCFF00]'); btn.classList.replace('text-white/10', 'text-black'); }
+            else { btn.disabled = true; btn.classList.replace('bg-[#CCFF00]', 'bg-white/5'); btn.classList.replace('text-black', 'text-white/10'); }
+        };
+
+        window.handleConfirmarPagamento = async () => {
+            const valor = parseFloat(document.getElementById('pagamento-input').value);
+            const frase = FRASES_ALIVIO[Math.floor(Math.random() * FRASES_ALIVIO.length)];
+            state.dados.contas = state.dados.contas.map(c => {
+                if (c.id === state.editando.id) {
+                    const hist = [...(c.historicoPagamentos || []), { id: Date.now().toString(), valor, data: new Date().toISOString() }];
+                    return { ...c, historicoPagamentos: hist, pago: hist.reduce((a,b)=>a+b.valor,0) >= c.valor };
+                }
+                return c;
+            });
+            state.feedback = { ativo: true, frase };
+            render(); await salvarFirebase();
+            setTimeout(() => { state.feedback.ativo = false; state.modal = null; render(); }, 2000);
+        };
+
+        window.excluirPagamentoParcial = async (pagamentoId) => {
+            try {
+                if (!state.editando) return;
+
+                const contaIndex = state.dados.contas.findIndex(c => c.id === state.editando.id);
+                if (contaIndex === -1) return;
+
+                let contaAtualizada = { ...state.dados.contas[contaIndex] };
+                contaAtualizada.historicoPagamentos = contaAtualizada.historicoPagamentos || [];
+                contaAtualizada.historicoPagamentos = contaAtualizada.historicoPagamentos.filter(p => p.id !== pagamentoId);
+                
+                const totalPago = contaAtualizada.historicoPagamentos.reduce((soma, p) => soma + p.valor, 0);
+                contaAtualizada.pago = totalPago >= contaAtualizada.valor;
+
+                state.dados.contas[contaIndex] = contaAtualizada;
+                state.editando = contaAtualizada;
+
+                await salvarFirebase();
+                render();
+            } catch (error) {
+                console.error("Erro ao excluir pagamento parcial:", error);
+                alert("Erro ao excluir pagamento parcial. Tente novamente.");
+            }
+        };
+
+        window.openModalCartao = () => { state.modal = 'cartao'; state.corSelecionada = CORES_ESTILO[0]; render(); };
+        window.editCartao = (id) => { state.editando = state.dados.cartoes.find(x => x.id === id); state.corSelecionada = state.editando.cor || CORES_ESTILO[0]; state.modal = 'cartao'; render(); };
+        window.handleSalvarCartao = async (e) => {
+            e.preventDefault();
+            const f = new FormData(e.target);
+            const lembrar = f.get('lembrarSemLancamento') === 'on';
+            const novo = { 
+                id: state.editando?.id || Date.now().toString(), 
+                banco: f.get('banco'), 
+                titular: f.get('titular'), 
+                diaFatura: parseInt(f.get('diaFatura')), 
+                imagem: state.tempImagem || state.editando?.imagem, 
+                cor: state.corSelecionada, 
+                categoria: f.get('categoria'),
+                lembrarSemLancamento: lembrar
+            };
+            if (state.editando) state.dados.cartoes = state.dados.cartoes.map(x => x.id === novo.id ? novo : x);
+            else state.dados.cartoes.push(novo);
+            closeModal(); await salvarFirebase();
+        };
+
+        window.openModalFixa = () => { state.modal = 'fixa'; render(); };
+        window.editFixa = (id) => { state.editando = state.dados.fixas.find(x => x.id === id); state.modal = 'fixa'; render(); };
+        window.handleSalvarFixa = async (e) => {
+            e.preventDefault();
+            const f = new FormData(e.target);
+            const lembrar = f.get('lembrarSemLancamento') === 'on';
+            const novo = { 
+                id: state.editando?.id || Date.now().toString(), 
+                nome: f.get('nome'), 
+                diaVencimento: parseInt(f.get('diaVencimento')), 
+                categoria: f.get('categoria'), 
+                imagem: state.tempImagem || state.editando?.imagem,
+                lembrarSemLancamento: lembrar
+            };
+            if (state.editando) state.dados.fixas = state.dados.fixas.map(x => x.id === novo.id ? novo : x);
+            else state.dados.fixas.push(novo);
+            closeModal(); await salvarFirebase();
+        };
+
+        window.confirmDelete = (id, tipo) => { state.itemExcluir = { id, tipo }; state.modal = 'excluir'; render(); };
+        window.handleConfirmExcluir = async () => {
+            const { id, tipo } = state.itemExcluir;
+            if (tipo === 'conta') state.dados.contas = state.dados.contas.filter(x => x.id !== id);
+            else if (tipo === 'cartao_db') state.dados.cartoes = state.dados.cartoes.filter(x => x.id !== id);
+            else if (tipo === 'fixa') state.dados.fixas = state.dados.fixas.filter(x => x.id !== id);
+            else if (tipo === 'usuario') state.dados.usuarios = state.dados.usuarios.filter(x => x.id !== id);
+            closeModal(); await salvarFirebase();
+        };
+
+        window.editConta = (id) => {
+            const c = state.dados.contas.find(x => x.id === id);
+            state.editando = c; 
+            state.tipoLancamento = c.tipo || 'conta'; 
+            state.catSelecionada = c.categoria || 'outros';
+            state.itemSelecionadoId = c.cartaoId || c.fixaId || ''; 
+            state.passoLancamento = 'formulario'; 
+            state.modal = 'lancamento';
+            
+            if (c.tipo === 'despesa_diaria') {
+                state.tipoLancamento = 'despesa_diaria';
+                state.catSelecionada = 'despesa_diaria';
+            }
+            
+            render();
+        };
+        window.editContaFromModal = (id) => { state.modal = null; setTimeout(() => editConta(id), 100); };
+        window.triggerFile = (id) => document.getElementById(`file-${id}`).click();
+        window.processFile = (e, target) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image(); img.src = ev.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas'); canvas.width = 120; canvas.height = 120;
+                    canvas.getContext('2d').drawImage(img, 0, 0, 120, 120);
+                    state[target] = canvas.toDataURL('image/jpeg', 0.5); render();
+                };
+            };
+            reader.readAsDataURL(file);
+        };
+        window.setCorCartao = (id) => { state.corSelecionada = CORES_ESTILO.find(c => c.id === id); render(); };
+
+        async function salvarFirebase() {
+            if (!state.user) return;
+            const ref = doc(db, 'apps', APP_ID, 'dados', 'financeiro');
+            try { 
+                await setDoc(ref, { 
+                    ...state.dados, 
+                    lastUpdate: Date.now() 
+                }, { merge: true }); 
+            } catch (e) { console.error("Erro ao salvar:", e); }
+        }
+
+        const init = async () => {
+            onAuthStateChanged(auth, u => {
+                if (u) {
+                    state.user = u;
+                    const ref = doc(db, 'apps', APP_ID, 'dados', 'financeiro');
+                    onSnapshot(ref, snap => {
+                        if (snap.exists()) {
+                            const d = snap.data();
+                            state.dados = {
+                                contas: Array.isArray(d?.contas) ? d.contas : [],
+                                cartoes: Array.isArray(d?.cartoes) ? d.cartoes.map(c => ({ ...c, lembrarSemLancamento: c.lembrarSemLancamento || false })) : [],
+                                fixas: Array.isArray(d?.fixas) ? d.fixas.map(f => ({ ...f, lembrarSemLancamento: f.lembrarSemLancamento || false })) : [],
+                                usuarios: Array.isArray(d?.usuarios) ? d.usuarios : usuariosPadrao,
+                                subcategoriasGastos: Array.isArray(d?.subcategoriasGastos) ? d.subcategoriasGastos : SUBCATEGORIAS_PADRAO
+                            };
+                            
+                            const rememberedUser = JSON.parse(localStorage.getItem('financeiro_remembered_user') || 'null');
+                            if (rememberedUser) {
+                                const found = state.dados.usuarios.find(u => u.id === rememberedUser.id);
+                                if (found) {
+                                    state.isLogged = true;
+                                    state.currentUser = found;
+                                }
+                            }
+                            
+                            render();
+                        }
+                    });
+                } else { signInAnonymously(auth); }
+            });
+        };
+        init();
+    </script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/meu-app-financeiro/service-worker.js');
+  });
+}
+</script>
+</body>
+</html>
